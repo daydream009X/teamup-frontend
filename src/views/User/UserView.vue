@@ -10,30 +10,30 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+// import { useRouter } from 'vue-router'
 import { onMounted, ref } from 'vue'
-import myAxios from '@/plugins/myAxios'
-import { showToast } from 'vant'
-import { getCurrentUser } from '@/services/user'
+// import myAxios from '@/plugins/myAxios'
+// import { showToast } from 'vant'
+import { getCurrentUser } from '@/services/user.ts'
 
 const user = ref()
 
-const router = useRouter()
+// const router = useRouter()
 
 onMounted(async () => {
   user.value = await getCurrentUser()
 })
 
-const toEdit = (editKey: string, editName: string, currentValue: string) => {
-  router.push({
-    path: '/user/edit',
-    query: {
-      editKey,
-      editName,
-      currentValue,
-    },
-  })
-}
+// const toEdit = (editKey: string, editName: string, currentValue: string) => {
+//   router.push({
+//     path: '/user/edit',
+//     query: {
+//       editKey,
+//       editName,
+//       currentValue,
+//     },
+//   })
+// }
 </script>
 
 <style scoped>

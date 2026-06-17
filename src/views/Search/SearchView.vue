@@ -16,7 +16,7 @@
     <div v-if="activeIds.length === 0">请选择标签</div>
     <van-row gutter="16" style="padding: 0 16px">
       <van-col v-for="tag in activeIds" :key="tag">
-        <van-tag closeable size="small" type="primary" @close="doClose(tag)">
+        <van-tag closeable type="primary" @close="doClose(tag)">
           {{ tag }}
         </van-tag>
       </van-col>
@@ -25,7 +25,7 @@
     <van-divider content-position="left">选择标签</van-divider>
     <van-tree-select
       v-model:active-id="activeIds"
-      v-model:main-active-index="activeIndex"
+      v-model:main-active-id="activeIndex"
       :items="tagList"
     />
 

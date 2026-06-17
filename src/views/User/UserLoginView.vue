@@ -26,12 +26,13 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
+// , useRouter
+import { useRoute } from 'vue-router'
 import { ref } from 'vue'
 import myAxios from '@/plugins/myAxios'
 import { showToast } from 'vant'
 
-const router = useRouter()
+// const router = useRouter()
 const route = useRoute()
 
 const userAccount = ref('')

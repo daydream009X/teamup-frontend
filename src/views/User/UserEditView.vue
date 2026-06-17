@@ -19,15 +19,15 @@ import { useRoute, useRouter } from 'vue-router'
 import { ref } from 'vue'
 import myAxios from '@/plugins/myAxios'
 import { showToast } from 'vant'
-import { getCurrentUser } from '@/services/user'
+import { getCurrentUser } from '@/services/user.ts'
 
 const route = useRoute()
 const router = useRouter()
 
 const editUser = ref({
-  editKey: route.query.editKey,
-  currentValue: route.query.currentValue,
-  editName: route.query.editName,
+  editKey: (route.query.editKey as string) ?? '',
+  currentValue: (route.query.currentValue as string) ?? '',
+  editName: (route.query.editName as string) ?? '',
 })
 
 const onSubmit = async () => {
@@ -45,7 +45,7 @@ const onSubmit = async () => {
     [editUser.value.editKey as string]: editUser.value.currentValue,
   })
   console.log(res, '更新请求')
-  if (res.code === 0 && res.data > 0) {
+  if (res.code === 0 && res.data) {
     showToast('修改成功')
     router.back()
   } else {
