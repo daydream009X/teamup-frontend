@@ -2,9 +2,9 @@
   <div id="basicLayout">
     <!-- 顶部导航栏 -->
     <van-nav-bar
-      title="标题"
+      :title="($route.meta.title as string) ?? ''"
       left-arrow
-      background="linear-gradient(90deg, #D09D69 0%, #E0C1A1 100%)"
+      background="var(--nav-bar-bg)"
       text-light
       @click-left="onClickLeft"
       @click-right="onClickRight"
@@ -42,5 +42,8 @@ const onClickRight = () => {
 
 <style scoped>
 #basicLayout {
+}
+#content {
+  padding-bottom: 70px;
 }
 </style>

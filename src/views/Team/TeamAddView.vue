@@ -67,7 +67,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { ref } from 'vue'
-import myAxios from '@/plugins/myAxios'
+import { addTeam } from '@/api/team'
 import { showToast } from 'vant'
 
 const router = useRouter()
@@ -81,7 +81,7 @@ const initFormData = {
   expireTime: undefined as string | undefined,
   maxNum: 3,
   password: '',
-  status: 0,
+  status: '0',
 }
 
 const minDate = new Date()
@@ -102,8 +102,8 @@ const onSubmit = async () => {
     ...addTeamData.value,
     status: Number(addTeamData.value.status),
   }
-  // todo 前端参数校验
-  const res = await myAxios.post('/team/add', postData)
+
+  const res = await addTeam(postData)
   if (res?.code === 0 && res.data) {
     showToast('添加成功')
     router.push({

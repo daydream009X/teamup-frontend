@@ -1,0 +1,67 @@
+* {
+  font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
+}
+
+/* ============================
+   白日主题（默认）
+   ============================ */
+:root,
+[data-theme='light'] {
+  --page-bg: #f5f0eb;
+  --nav-bar-bg: linear-gradient(90deg, #d09d69 0%, #e0c1a1 100%);
+
+  --card-bg: linear-gradient(135deg, #fdfbfb 0%, #faf6f2 100%);
+  --card-border: #f0ebe6;
+  --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --card-hover-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+
+  --color-primary: #1989fa;
+  --color-accent: #d09d69;
+  --color-sky: #87ceeb;
+  --color-danger: #ee0a24;
+
+  --text-color: #323233;
+  --text-muted: #969799;
+
+  --btn-primary-bg: #1989fa;
+  --btn-primary-text: #fff;
+
+  --input-border: #87ceeb;
+  --icon-color: #1989fa;
+}
+
+/* ============================
+   白日做梦主题
+   ============================ */
+[data-theme='dream'] {
+  --page-bg: #f8f0ff;
+  --nav-bar-bg: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
+
+  --card-bg: linear-gradient(135deg, #ffffff 0%, #f8f0ff 100%);
+  --card-border: #e8d5f5;
+  --card-shadow: 0 2px 12px rgba(161, 140, 209, 0.15);
+  --card-hover-shadow: 0 4px 20px rgba(161, 140, 209, 0.25);
+
+  --color-primary: #e040fb;
+  --color-accent: #a18cd1;
+  --color-sky: #b39ddb;
+  --color-danger: #ff4081;
+
+  --text-color: #4a3f5c;
+  --text-muted: #9e8db0;
+
+  --btn-primary-bg: #e040fb;
+  --btn-primary-text: #fff;
+
+  --input-border: #b39ddb;
+  --icon-color: #e040fb;
+}
+
+/* 全局页面背景 */
+body {
+  background-color: var(--page-bg);
+  color: var(--text-color);
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+}

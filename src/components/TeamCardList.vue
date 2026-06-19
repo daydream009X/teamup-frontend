@@ -14,13 +14,14 @@
       </template>
       <template #bottom>
         <div>
-          {{ `队伍人数: ${team.hasJoinNum}/${team.maxNum}` }}
+          <span>队长：{{ team.createUser?.username ?? '未知' }}</span>
+          <span style="margin-left: 1em">{{ `队伍人数: ${team.hasJoinNum}/${team.maxNum}` }}</span>
         </div>
         <div v-if="team.expireTime">
-          {{ '过期时间: ' + team.expireTime }}
+          {{ '过期时间: ' + formatDateTime(team.expireTime) }}
         </div>
         <div>
-          {{ '创建时间: ' + team.createTime }}
+          {{ '创建时间: ' + formatDateTime(team.createTime) }}
         </div>
       </template>
       <template #footer>
@@ -72,14 +73,15 @@
 </template>
 
 <script setup lang="ts">
-import type { TeamType } from '@/models/team.ts'
-import { teamStatusEnum } from '@/constants/team.ts'
+import type { TeamType } from '@/models/team.d.ts'
+import { teamStatusEnum } from '@/constants/teamStatus'
 import ikun from '@/assets/ikun.png'
-import myAxios from '@/plugins/myAxios'
 import { showToast } from 'vant'
 import { onMounted, ref } from 'vue'
-import { getCurrentUser } from '@/services/user.ts'
+import { getCurrentUser } from '@/api/user'
+import { joinTeam, quitTeam, deleteTeam } from '@/api/team'
 import { useRouter } from 'vue-router'
+import { formatDateTime } from '@/utils/dateUtils'
 
 interface TeamCardListProps {
   teamList: TeamType[]
@@ -88,6 +90,10 @@ interface TeamCardListProps {
 const props = withDefaults(defineProps<TeamCardListProps>(), {
   teamList: () => [],
 })
+
+const emit = defineEmits<{
+  refresh: []
+}>()
 
 const showPasswordDialog = ref(false)
 const password = ref('')
@@ -121,13 +127,14 @@ const doJoinTeam = async () => {
   if (!joinTeamId.value) {
     return
   }
-  const res = await myAxios.post('/team/join', {
+  const res = await joinTeam({
     teamId: joinTeamId.value,
     password: password.value,
   })
   if (res?.code === 0) {
     showToast('加入成功')
     doJoinCancel()
+    emit('refresh')
   } else {
     showToast('加入失败' + (res?.description ? `,${res.description}` : ''))
   }
@@ -151,11 +158,10 @@ const doUpdateTeam = (id: number) => {
  * @param id
  */
 const doQuitTeam = async (id: number) => {
-  const res = await myAxios.post('/team/quit', {
-    teamId: id,
-  })
+  const res = await quitTeam(id)
   if (res?.code === 0) {
     showToast('操作成功')
+    emit('refresh')
   } else {
     showToast('操作失败' + (res?.description ? `,${res.description}` : ''))
   }
@@ -166,11 +172,10 @@ const doQuitTeam = async (id: number) => {
  * @param id
  */
 const doDeleteTeam = async (id: number) => {
-  const res = await myAxios.post('/team/delete', {
-    id,
-  })
+  const res = await deleteTeam(id)
   if (res?.code === 0) {
     showToast('操作成功')
+    emit('refresh')
   } else {
     showToast('操作失败' + (res?.description ? `,${res.description}` : ''))
   }
@@ -178,8 +183,29 @@ const doDeleteTeam = async (id: number) => {
 </script>
 
 <style scoped>
+#teamCardList {
+  padding: 0 12px;
+}
+#teamCardList :deep(.van-card) {
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--card-border);
+  margin-bottom: 12px;
+  transition: box-shadow 0.3s;
+}
+#teamCardList :deep(.van-card):hover {
+  box-shadow: var(--card-hover-shadow);
+}
 #teamCardList :deep(.van-image__img) {
   height: 128px;
   object-fit: unset;
+}
+#teamCardList :deep(.van-tag) {
+  color: #87ceeb !important;
+  border-color: #87ceeb !important;
+  background: transparent !important;
+  font-size: 14px;
+  font-weight: bold;
 }
 </style>

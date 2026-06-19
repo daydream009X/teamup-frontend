@@ -9,8 +9,7 @@
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { showToast } from 'vant'
-import myAxios from '@/plugins/myAxios'
-import qs from 'qs'
+import { searchUsersByTags } from '@/api/user'
 import type { UserType } from '@/models/user.d.ts'
 import UserCardList from '@/components/UserCardList.vue'
 
@@ -20,15 +19,7 @@ const { tags } = route.query
 const userList = ref<UserType[]>([])
 
 onMounted(async () => {
-  const userListData = await myAxios
-    .get('/user/search/tags', {
-      params: {
-        tagNameList: tags,
-      },
-      paramsSerializer: (params: Record<string, unknown>) => {
-        return qs.stringify(params, { indices: false })
-      },
-    })
+  const userListData = await searchUsersByTags(tags as string | string[])
     .then(function (response) {
       console.log('/user/search/tags succeed', response)
       return response?.data

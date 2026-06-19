@@ -45,12 +45,19 @@
         <van-field
           v-if="Number(addTeamData.status) === 2"
           v-model="addTeamData.password"
-          type="password"
+          :type="passwordVisible ? 'text' : 'password'"
           name="password"
           label="密码"
           placeholder="请输入队伍密码"
           :rules="[{ required: true, message: '请填写密码' }]"
-        />
+        >
+          <template #right-icon>
+            <van-icon
+              :name="passwordVisible ? 'eye-o' : 'closed-eye'"
+              @click="passwordVisible = !passwordVisible"
+            />
+          </template>
+        </van-field>
       </van-cell-group>
       <div style="margin: 16px">
         <van-button round block type="primary" native-type="submit"> 提交 </van-button>
@@ -62,7 +69,7 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { onMounted, ref } from 'vue'
-import myAxios from '@/plugins/myAxios'
+import { getTeam, updateTeam } from '@/api/team'
 import { showToast } from 'vant'
 
 const router = useRouter()
@@ -79,11 +86,12 @@ interface TeamData {
 
 // 展示日期选择器
 const showPicker = ref(false)
+const passwordVisible = ref(false)
 const currentDate = ref<string[]>([])
 
 const minDate = new Date()
 
-const id = route.query.id
+const id = route.query.id as string
 
 // 需要用户填写的表单数据
 const addTeamData = ref<TeamData>({})
@@ -101,13 +109,13 @@ onMounted(async () => {
     showToast('加载队伍失败')
     return
   }
-  const res = await myAxios.get('/team/get', {
-    params: {
-      id,
-    },
-  })
+  const res = await getTeam(id)
   if (res?.code === 0) {
     addTeamData.value = res.data as Record<string, unknown>
+    // radio name 是字符串，需要把后端返回的数字 status 转成字符串才能显示选中状态
+    if (addTeamData.value.status != null) {
+      addTeamData.value.status = String(addTeamData.value.status)
+    }
   } else {
     showToast('加载队伍失败，请刷新重试')
   }
@@ -119,8 +127,8 @@ const onSubmit = async () => {
     ...addTeamData.value,
     status: Number(addTeamData.value.status),
   }
-  // todo 前端参数校验
-  const res = await myAxios.post('/team/update', postData)
+
+  const res = await updateTeam(postData)
   if (res?.code === 0 && res.data) {
     showToast('更新成功')
     router.push({

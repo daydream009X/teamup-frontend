@@ -9,7 +9,7 @@ const myAxios = axios.create({
 
 myAxios.defaults.withCredentials = true // 配置为true
 
-// Add a request interceptor
+// 请求拦截器
 myAxios.interceptors.request.use(
   function (config) {
     console.log('我要许下愿望了', config)
@@ -20,7 +20,7 @@ myAxios.interceptors.request.use(
   },
 )
 
-// Add a response interceptor
+// 响应拦截器
 myAxios.interceptors.response.use(
   function (response) {
     console.log('我收到你的愿望了', response)

@@ -12,10 +12,10 @@
 
 <script setup lang="ts">
 import { ref, watchEffect } from 'vue'
-import myAxios from '@/plugins/myAxios'
 import { showToast } from 'vant'
 import UserCardList from '@/components/UserCardList.vue'
-import type { UserType } from '@/models/user.ts'
+import { getCurrentUser, matchUsers, recommendUsers } from '@/api/user'
+import type { UserType } from '@/models/user.d.ts'
 
 const isMatchMode = ref<boolean>(false)
 
@@ -32,7 +32,7 @@ const loadData = async () => {
   if (isMatchMode.value) {
     const num = 10
     try {
-      const res = await myAxios.get('/user/match', { params: { num } })
+      const res = await matchUsers(num)
       console.log('/user/match succeed', res)
       userListData = res?.data as unknown as Record<string, unknown>[]
     } catch (error) {
@@ -42,9 +42,7 @@ const loadData = async () => {
   } else {
     // 普通模式，直接分页查询用户
     try {
-      const res = await myAxios.get('/user/recommend', {
-        params: { pageSize: 8, pageNum: 1 },
-      })
+      const res = await recommendUsers(8, 1)
       console.log('/user/recommend succeed', res)
       userListData = (res?.data as Record<string, unknown>)?.records as unknown as Record<
         string,
@@ -62,6 +60,15 @@ const loadData = async () => {
       }
     })
     userList.value = userListData as UserType[]
+    // 过滤掉当前登录用户
+    try {
+      const currentUser = await getCurrentUser()
+      if (currentUser) {
+        userList.value = userList.value.filter((u) => u.id !== currentUser.id)
+      }
+    } catch {
+      // 获取当前用户失败，不过滤
+    }
   }
   loading.value = false
 }
