@@ -6,7 +6,7 @@ import type { UserType } from '@/models/user.d.ts'
  * 用户登录
  */
 export const login = (data: { userAccount: string; userPassword: string }) =>
-  myAxios.post('/user/login', data)
+  myAxios.post<UserType>('/user/login', data)
 
 /**
  * 用户注册
@@ -28,12 +28,17 @@ export const logout = () => myAxios.post('/user/logout')
  * 获取当前登录用户
  */
 export const getCurrentUser = async () => {
-  try {
-    const res = await myAxios.get<UserType>('/user/current')
-    return res?.data ?? null
-  } catch {
+  const res = await myAxios.get<UserType>('/user/current')
+
+  if (res.code === 0 && res.data) {
+    return res.data
+  }
+
+  if (res.code === 40100) {
     return null
   }
+
+  throw new Error(res.description || res.message || '获取当前用户失败')
 }
 
 /**

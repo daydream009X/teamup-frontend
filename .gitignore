@@ -1,5 +1,26 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output and caches
+dist/
+dist-ssr/
+coverage/
+.nyc_output/
+.vite/
+.cache/
+*.tsbuildinfo
+.eslintcache
+*.timestamp-*-*.mjs
+
+# Environment files (commit examples only)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,38 +28,41 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-.DS_Store
-dist
-dist-ssr
-coverage
-*.local
+# Test and browser automation output
+/cypress/videos/
+/cypress/screenshots/
+test-results/
+playwright-report/
+blob-report/
+__screenshots__/
 
-# Editor directories and files
+# Private keys and signing files
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+.npmrc
+
+# Editor and local AI-tool state
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
+.cursor/
+.codex/
+.agents/
+.claude/settings.local.json
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-*.tsbuildinfo
-
-.eslintcache
-
-# Cypress
-/cypress/videos/
-/cypress/screenshots/
-
-# Vitest
-__screenshots__/
-
-# Vite
-*.timestamp-*-*.mjs
-
-# Env files
-.env
-.env.*
-!.env.example
+# OS and temporary files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.local
+*.tmp
+*.temp

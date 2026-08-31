@@ -1,7 +1,7 @@
 <template>
   <div id="userView">
-    <template v-if="user">
-      <user-card-list :user-list="[user]" :loading="false" />
+    <template v-if="userStore.currentUser">
+      <user-card-list :user-list="[userStore.currentUser]" :loading="false" />
       <van-cell title="修改信息" is-link to="/user/update" />
       <van-cell title="我创建的队伍" is-link to="/user/team/create" />
       <van-cell title="我加入的队伍" is-link to="/user/team/join" />
@@ -15,27 +15,20 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getCurrentUser, logout } from '@/api/user'
+import { logout } from '@/api/user'
 import { showToast } from 'vant'
 import UserCardList from '@/components/UserCardList.vue'
+import { useUserStore } from '@/stores/user'
 
-const user = ref()
 const router = useRouter()
-
-onMounted(async () => {
-  user.value = await getCurrentUser()
-  if (user.value?.tags && typeof user.value.tags === 'string') {
-    user.value.tags = JSON.parse(user.value.tags)
-  }
-})
+const userStore = useUserStore()
 
 // 退出登录
 const doLogout = async () => {
   const res = await logout()
   if (res?.code === 0) {
-    user.value = null
+    userStore.clearCurrentUser()
     router.push('/')
     showToast('已退出登录')
   } else {
@@ -45,9 +38,13 @@ const doLogout = async () => {
 
 // 切换账户
 const doSwitchAccount = async () => {
-  await logout()
-  user.value = null
-  router.push('/user/login')
+  const res = await logout()
+  if (res?.code === 0) {
+    userStore.clearCurrentUser()
+    router.push('/user/login')
+  } else {
+    showToast('切换账户失败')
+  }
 }
 </script>
 

@@ -28,14 +28,14 @@
         <van-button
           size="small"
           type="primary"
-          v-if="team.userId !== currentUser?.id && !team.hasJoin"
+          v-if="team.userId !== userStore.currentUser?.id && !team.hasJoin"
           plain
           @click="preJoinTeam(team)"
         >
           加入队伍
         </van-button>
         <van-button
-          v-if="team.userId === currentUser?.id"
+          v-if="team.userId === userStore.currentUser?.id"
           size="small"
           plain
           @click="doUpdateTeam(team.id)"
@@ -43,7 +43,7 @@
         </van-button>
         <!-- 仅加入队伍可见 -->
         <van-button
-          v-if="team.userId !== currentUser?.id && team.hasJoin"
+          v-if="team.userId !== userStore.currentUser?.id && team.hasJoin"
           size="small"
           plain
           type="danger"
@@ -51,7 +51,7 @@
           >退出队伍
         </van-button>
         <van-button
-          v-if="team.userId === currentUser?.id"
+          v-if="team.userId === userStore.currentUser?.id"
           size="small"
           type="danger"
           plain
@@ -77,11 +77,11 @@ import type { TeamType } from '@/models/team.d.ts'
 import { teamStatusEnum } from '@/constants/teamStatus'
 import ikun from '@/assets/ikun.png'
 import { showToast } from 'vant'
-import { onMounted, ref } from 'vue'
-import { getCurrentUser } from '@/api/user'
+import { ref } from 'vue'
 import { joinTeam, quitTeam, deleteTeam } from '@/api/team'
 import { useRouter } from 'vue-router'
 import { formatDateTime } from '@/utils/dateUtils'
+import { useUserStore } from '@/stores/user'
 
 interface TeamCardListProps {
   teamList: TeamType[]
@@ -98,13 +98,8 @@ const emit = defineEmits<{
 const showPasswordDialog = ref(false)
 const password = ref('')
 const joinTeamId = ref(0)
-const currentUser = ref()
-
 const router = useRouter()
-
-onMounted(async () => {
-  currentUser.value = await getCurrentUser()
-})
+const userStore = useUserStore()
 
 const preJoinTeam = (team: TeamType) => {
   joinTeamId.value = team.id

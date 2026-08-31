@@ -14,13 +14,15 @@
 import { ref, watchEffect } from 'vue'
 import { showToast } from 'vant'
 import UserCardList from '@/components/UserCardList.vue'
-import { getCurrentUser, matchUsers, recommendUsers } from '@/api/user'
+import { matchUsers, recommendUsers } from '@/api/user'
 import type { UserType } from '@/models/user.d.ts'
+import { useUserStore } from '@/stores/user'
 
 const isMatchMode = ref<boolean>(false)
 
 const userList = ref<UserType[]>([])
 const loading = ref(true)
+const userStore = useUserStore()
 
 /**
  * 加载数据
@@ -60,14 +62,8 @@ const loadData = async () => {
       }
     })
     userList.value = userListData as UserType[]
-    // 过滤掉当前登录用户
-    try {
-      const currentUser = await getCurrentUser()
-      if (currentUser) {
-        userList.value = userList.value.filter((u) => u.id !== currentUser.id)
-      }
-    } catch {
-      // 获取当前用户失败，不过滤
+    if (userStore.currentUser) {
+      userList.value = userList.value.filter((u) => u.id !== userStore.currentUser?.id)
     }
   }
   loading.value = false

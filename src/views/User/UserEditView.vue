@@ -89,12 +89,14 @@
 import { useRoute, useRouter } from 'vue-router'
 import { onMounted, ref } from 'vue'
 import { showToast } from 'vant'
-import { getCurrentUser, updateUser } from '@/api/user'
+import { updateUser } from '@/api/user'
 import AVATARS from '@/constants/avatars'
 import TagSelector from '@/components/TagSelector.vue'
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 
 const avatarList = ref(AVATARS)
 
@@ -106,21 +108,41 @@ const editUser = ref({
 
 const selectedTags = ref<string[]>([])
 
+const refreshCurrentUser = async () => {
+  try {
+    const user = await userStore.refreshCurrentUser()
+    return user === null ? 'notLoggedIn' : 'success'
+  } catch {
+    return 'failed'
+  }
+}
+
 const onSubmitTags = async () => {
-  const currentUser = await getCurrentUser()
+  const currentUser = userStore.currentUser
   if (!currentUser) {
     showToast('用户未登录')
     return
   }
-  const res = await updateUser({
-    id: currentUser.id,
-    tags: JSON.stringify(selectedTags.value),
-  })
-  if (res?.code === 0 && res.data) {
-    showToast('标签修改成功')
-    router.back()
-  } else {
-    showToast('标签修改失败')
+  try {
+    const res = await updateUser({
+      id: currentUser.id,
+      tags: JSON.stringify(selectedTags.value),
+    })
+    if (res?.code === 0 && res.data) {
+      const refreshed = await refreshCurrentUser()
+      showToast(
+        refreshed === 'success'
+          ? '标签修改成功'
+          : refreshed === 'notLoggedIn'
+            ? '资料已更新，但登录状态已失效，请重新登录'
+            : '资料已更新，但用户信息刷新失败，请稍后重试',
+      )
+      router.back()
+    } else {
+      showToast('标签修改失败')
+    }
+  } catch {
+    showToast('标签修改失败，请检查网络后重试')
   }
 }
 
@@ -137,7 +159,7 @@ onMounted(async () => {
 // ---- 标签编辑相关 end ----
 
 const onSubmit = async () => {
-  const currentUser = await getCurrentUser()
+  const currentUser = userStore.currentUser
 
   if (!currentUser) {
     showToast('用户未登录')
@@ -175,13 +197,24 @@ const onSubmit = async () => {
     updateData.tags = JSON.stringify(tags)
   }
 
-  const res = await updateUser(updateData)
-  console.log(res, '更新请求')
-  if (res.code === 0 && res.data) {
-    showToast('修改成功')
-    router.back()
-  } else {
-    showToast('修改错误')
+  try {
+    const res = await updateUser(updateData)
+    console.log(res, '更新请求')
+    if (res.code === 0 && res.data) {
+      const refreshed = await refreshCurrentUser()
+      showToast(
+        refreshed === 'success'
+          ? '修改成功'
+          : refreshed === 'notLoggedIn'
+            ? '资料已更新，但登录状态已失效，请重新登录'
+            : '资料已更新，但用户信息刷新失败，请稍后重试',
+      )
+      router.back()
+    } else {
+      showToast('修改错误')
+    }
+  } catch {
+    showToast('修改失败，请检查网络后重试')
   }
 }
 </script>

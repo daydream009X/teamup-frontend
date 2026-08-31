@@ -3,8 +3,7 @@ import axios from 'axios'
 const isDev = import.meta.env.MODE !== 'production'
 
 const myAxios = axios.create({
-  baseURL: isDev ? 'http://localhost:8080/api' : '',
-  // : '线上地址'
+  baseURL: isDev ? 'http://localhost:8081/api' : '',
 })
 
 myAxios.defaults.withCredentials = true // 配置为true
@@ -20,14 +19,30 @@ myAxios.interceptors.request.use(
   },
 )
 
+const getInternalRedirectPath = () => {
+  const { pathname, search, hash } = window.location
+  const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
+  const path = basePath && basePath !== '/' && pathname.startsWith(basePath)
+    ? pathname.slice(basePath.length) || '/'
+    : pathname
+
+  return `${path.startsWith('/') ? path : `/${path}`}${search}${hash}`
+}
+
 // 响应拦截器
 myAxios.interceptors.response.use(
   function (response) {
     console.log('我收到你的愿望了', response)
-    // 未登录则跳转到登录页
+    // 当前用户探测和登录页本身不触发全局跳转，避免登录页循环刷新。
     if (response?.data?.code === 40100) {
-      const redirectUrl = window.location.href
-      window.location.href = `/user/login?redirect=${redirectUrl}`
+      const requestUrl = response.config.url ?? ''
+      const isCurrentUserRequest = requestUrl.includes('/user/current')
+      const isLoginPage = window.location.pathname.endsWith('/user/login')
+
+      if (!isCurrentUserRequest && !isLoginPage) {
+        const redirectPath = getInternalRedirectPath()
+        window.location.href = `${import.meta.env.BASE_URL}user/login?redirect=${encodeURIComponent(redirectPath)}`
+      }
     }
     return response.data
   },

@@ -40,12 +40,15 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ref } from 'vue'
 import { login } from '@/api/user'
 import { showToast } from 'vant'
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
+const router = useRouter()
+const userStore = useUserStore()
 
 const userAccount = ref('')
 const userPassword = ref('')
@@ -54,20 +57,25 @@ const passwordVisible = ref(false)
 // 去除空格
 const noSpace = (val: string) => val.replace(/\s/g, '')
 const noSpaceValidator = (val: string) => !/\s/.test(val)
+const isSafeRedirect = (redirect: string) => redirect.startsWith('/') && !redirect.startsWith('//')
 
 const onSubmit = async () => {
-  const res = await login({
-    userAccount: userAccount.value,
-    userPassword: userPassword.value,
-  })
-  console.log(res, '用户登录')
-  if (res.code === 0 && res.data) {
-    showToast('登录成功')
-    // 跳转到之前的页面
-    const redirectUrl = (route.query?.redirect as string) ?? '/'
-    window.location.href = redirectUrl
-  } else {
-    showToast('登录失败')
+  try {
+    const res = await login({
+      userAccount: userAccount.value,
+      userPassword: userPassword.value,
+    })
+    console.log(res, '用户登录')
+    if (res.code === 0 && res.data) {
+      userStore.setCurrentUser(res.data)
+      showToast('登录成功')
+      const redirectUrl = typeof route.query.redirect === 'string' ? route.query.redirect : ''
+      await router.replace(isSafeRedirect(redirectUrl) ? redirectUrl : '/')
+    } else {
+      showToast('登录失败')
+    }
+  } catch {
+    showToast('登录请求失败，请检查网络后重试')
   }
 }
 </script>
