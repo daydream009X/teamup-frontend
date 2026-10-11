@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { showDialog } from 'vant'
+import { showDialog, showToast } from 'vant'
 
 type ThemeValue = 'light' | 'dream'
 
@@ -41,15 +41,20 @@ const themeLabelMap: Record<ThemeValue, string> = {
   dream: '白日做梦',
 }
 
-// 读取 localStorage，没有则默认白日
-const currentTheme = ref<ThemeValue>((localStorage.getItem('theme') as ThemeValue) || 'light')
+const currentTheme = ref<ThemeValue>(
+  document.documentElement.dataset.theme === 'dream' ? 'dream' : 'light',
+)
 
 const currentThemeLabel = computed(() => themeLabelMap[currentTheme.value])
 
 const applyTheme = (theme: ThemeValue) => {
   currentTheme.value = theme
   document.documentElement.dataset.theme = theme
-  localStorage.setItem('theme', theme)
+  try {
+    localStorage.setItem('theme', theme)
+  } catch {
+    showToast('主题已切换，浏览器存储不可用，刷新后无法保留')
+  }
 }
 
 const show = ref(false)

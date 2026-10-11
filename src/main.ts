@@ -11,8 +11,13 @@ import './assets/main.css'
 import 'vant/lib/index.css'
 
 // 主题初始化
-const savedTheme = localStorage.getItem('theme') || 'light'
-document.documentElement.dataset.theme = savedTheme
+document.documentElement.dataset.theme = 'light'
+try {
+  if (localStorage.getItem('theme') === 'dream') document.documentElement.dataset.theme = 'dream'
+} catch {
+  // 浏览器禁用存储时仍正常启动，使用默认主题。
+  document.documentElement.dataset.theme = 'light'
+}
 
 const app = createApp(App)
 

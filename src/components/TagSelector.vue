@@ -1,3 +1,129 @@
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { showToast } from 'vant'
+
+import { listTags } from '@/api/tag'
+
+interface TagGroup {
+  text: string
+  id: number
+  children: { text: string; id: string }[]
+}
+
+const props = withDefaults(
+  defineProps<{
+    modelValue: string[]
+    lockedTags?: string[]
+    excludeGenderGroup?: boolean
+  }>(),
+  {
+    lockedTags: () => [],
+    excludeGenderGroup: false,
+  },
+)
+
+const emit = defineEmits<{
+  'update:modelValue': [value: string[]]
+}>()
+
+const originTagList = ref<TagGroup[]>([])
+const filterKeyword = ref<string>('')
+const selectedTags = ref<string[]>([...props.modelValue])
+const activeIndex = ref<number>(0)
+let active = true
+
+const LOCKED = new Set(props.lockedTags)
+
+const lockedTagList = computed(() => selectedTags.value.filter((t) => LOCKED.has(t)))
+const normalTagList = computed(() => selectedTags.value.filter((t) => !LOCKED.has(t)))
+const allTags = computed(() => selectedTags.value)
+const displayTagList = computed(() => {
+  if (!filterKeyword.value) {
+    return originTagList.value
+  }
+  return originTagList.value.map((parentTag) => ({
+    ...parentTag,
+    children: parentTag.children.filter((item) => item.text.includes(filterKeyword.value)),
+  }))
+})
+
+const doClose = (tag: string) => {
+  selectedTags.value = selectedTags.value.filter((t) => t !== tag)
+  emit('update:modelValue', [...selectedTags.value])
+}
+
+const onActiveIdChange = (ids: string[]) => {
+  selectedTags.value = ids
+  emit('update:modelValue', [...ids])
+}
+
+const fetchTags = async () => {
+  try {
+    const res = await listTags()
+    if (!active) return
+    if (res?.code !== 0) {
+      showToast('标签加载失败，请稍后重试')
+      return
+    }
+    const data: unknown = res.data
+    if (!Array.isArray(data)) {
+      showToast('标签数据异常，请稍后重试')
+      return
+    }
+    const validTags = data.filter(
+      (tag: unknown): tag is Record<string, unknown> & { tagName: string } =>
+        typeof tag === 'object' &&
+        tag !== null &&
+        'tagName' in tag &&
+        typeof tag.tagName === 'string' &&
+        tag.tagName.trim().length > 0,
+    )
+    const parents = validTags.filter((tag) => tag.isParent === 1 || tag.isParent === true)
+    const children = validTags.filter((tag) => !(tag.isParent === 1 || tag.isParent === true))
+    let filteredParents = parents
+    if (props.excludeGenderGroup) {
+      filteredParents = parents.filter((parentTag) => parentTag.tagName !== '性别')
+    }
+    const mapped = filteredParents.map((parentTag) => ({
+      text: parentTag.tagName,
+      id: parentTag.id as number,
+      children: children
+        .filter((childTag) => childTag.parentId === parentTag.id)
+        .map((childTag) => ({
+          text: childTag.tagName,
+          id: childTag.tagName,
+        })),
+    }))
+    originTagList.value = mapped
+  } catch {
+    if (!active) return
+    showToast('标签加载失败，请检查网络后重试')
+  }
+}
+
+const filter = (keyword: string): void => {
+  filterKeyword.value = keyword
+}
+
+defineExpose({ filter })
+
+onMounted(() => {
+  void fetchTags()
+})
+
+onUnmounted(() => {
+  active = false
+})
+
+// 监听外部 v-model 变化，同步到内部
+watch(
+  () => props.modelValue,
+  (val) => {
+    selectedTags.value = [...val]
+  },
+)
+</script>
+
 <template>
   <div class="tag-selector">
     <van-divider
@@ -41,109 +167,6 @@
     />
   </div>
 </template>
-
-<script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { listTags } from '@/api/tag'
-
-interface TagGroup {
-  text: string
-  id: number
-  children: { text: string; id: string }[]
-}
-
-const props = withDefaults(
-  defineProps<{
-    modelValue: string[]
-    lockedTags?: string[]
-    excludeGenderGroup?: boolean
-  }>(),
-  {
-    lockedTags: () => [],
-    excludeGenderGroup: false,
-  },
-)
-
-const emit = defineEmits<{
-  'update:modelValue': [value: string[]]
-}>()
-
-const originTagList = ref<TagGroup[]>([])
-const displayTagList = ref<TagGroup[]>([])
-const selectedTags = ref<string[]>([...props.modelValue])
-const activeIndex = ref(0)
-
-const LOCKED = new Set(props.lockedTags)
-
-const lockedTagList = computed(() => selectedTags.value.filter((t) => LOCKED.has(t)))
-const normalTagList = computed(() => selectedTags.value.filter((t) => !LOCKED.has(t)))
-const allTags = computed(() => selectedTags.value)
-
-const doClose = (tag: string) => {
-  selectedTags.value = selectedTags.value.filter((t) => t !== tag)
-  emit('update:modelValue', [...selectedTags.value])
-}
-
-const onActiveIdChange = (ids: string[]) => {
-  selectedTags.value = ids
-  emit('update:modelValue', [...ids])
-}
-
-const fetchTags = async () => {
-  const res = await listTags()
-  if (res?.code === 0) {
-    const data = res.data as unknown as Record<string, unknown>[]
-    const parents = data.filter(
-      (t: Record<string, unknown>) => t.isParent === 1 || t.isParent === true,
-    )
-    const children = data.filter(
-      (t: Record<string, unknown>) => !(t.isParent === 1 || t.isParent === true),
-    )
-    let filteredParents = parents
-    if (props.excludeGenderGroup) {
-      filteredParents = parents.filter((p: Record<string, unknown>) => p.tagName !== '性别')
-    }
-    const mapped = filteredParents.map((p: Record<string, unknown>) => ({
-      text: p.tagName as string,
-      id: p.id as number,
-      children: children
-        .filter((c: Record<string, unknown>) => c.parentId === p.id)
-        .map((c: Record<string, unknown>) => ({
-          text: c.tagName as string,
-          id: c.tagName as string,
-        })),
-    }))
-    originTagList.value = mapped
-    displayTagList.value = mapped
-  }
-}
-
-onMounted(() => {
-  fetchTags()
-})
-
-// 监听外部 v-model 变化，同步到内部
-watch(
-  () => props.modelValue,
-  (val) => {
-    selectedTags.value = [...val]
-  },
-)
-
-const filter = (keyword: string) => {
-  if (!keyword) {
-    displayTagList.value = originTagList.value
-    return
-  }
-  displayTagList.value = originTagList.value.map((parentTag) => {
-    const tempParentTag = { ...parentTag }
-    tempParentTag.children = parentTag.children.filter((item) => item.text.includes(keyword))
-    return tempParentTag
-  })
-}
-
-defineExpose({ filter })
-</script>
 
 <style scoped>
 .tag-grid {

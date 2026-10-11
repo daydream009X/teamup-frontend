@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import ts from 'typescript'
+import { effectScope } from 'vue'
 
 // 使用项目已有 TypeScript 编译器，兼容项目支持的 Node 20，无需原生类型擦除。
 const cacheDir = fileURLToPath(new URL('../node_modules/.tmp/', import.meta.url))
@@ -96,4 +97,49 @@ test('存储被禁用或配额已满时历史不会抛错', () => {
   const limited = useSearchHistory()
   limited.addHistory('算法')
   assert.deepEqual(limited.history.value, ['算法'])
+  limited.addHistory('前端')
+  assert.deepEqual(limited.history.value, ['前端', '算法'])
+})
+
+test('多个页面交替写入保留最新历史，删除和清空不会被旧实例恢复', () => {
+  const storage = mockStorage({ [KEY]: JSON.stringify(['旧标签']) })
+  const first = useSearchHistory()
+  const second = useSearchHistory()
+  first.addHistory('前端')
+  second.addHistory('算法')
+  assert.deepEqual(JSON.parse(storage.getItem(KEY)), ['算法', '前端', '旧标签'])
+  first.removeHistory('旧标签')
+  second.addHistory('蓝桥杯')
+  assert.deepEqual(JSON.parse(storage.getItem(KEY)), ['蓝桥杯', '算法', '前端'])
+  first.clearHistory()
+  second.addHistory('数学建模')
+  assert.deepEqual(JSON.parse(storage.getItem(KEY)), ['数学建模'])
+})
+
+test('其他标签页的存储事件同步界面，组件销毁后释放监听', () => {
+  const storage = mockStorage()
+  const events = new EventTarget()
+  Object.defineProperty(globalThis, 'window', { value: events, configurable: true })
+  const scope = effectScope()
+  try {
+    const state = scope.run(() => useSearchHistory())
+    const dispatchStorage = (key) => {
+      const event = new Event('storage')
+      Object.defineProperties(event, { key: { value: key }, storageArea: { value: storage } })
+      events.dispatchEvent(event)
+    }
+    storage.setItem(KEY, JSON.stringify(['前端']))
+    dispatchStorage(KEY)
+    assert.deepEqual(state.history.value, ['前端'])
+    storage.removeItem(KEY)
+    dispatchStorage(null)
+    assert.deepEqual(state.history.value, [])
+    scope.stop()
+    storage.setItem(KEY, JSON.stringify(['算法']))
+    dispatchStorage(KEY)
+    assert.deepEqual(state.history.value, [])
+  } finally {
+    scope.stop()
+    delete globalThis.window
+  }
 })

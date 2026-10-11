@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 
@@ -12,9 +12,38 @@ const tagSelectorRef = ref<InstanceType<typeof TagSelector>>()
 const searchText = ref<string>('')
 const activeIds = ref<string[]>([])
 const searchFocused = ref<boolean>(false)
+const pointerActive = ref(false)
+let pointerReleaseTimer: number | undefined
+const composing = ref(false)
 const { history, removeHistory, clearHistory } = useSearchHistory()
 
-const showDiscovery = computed(() => searchFocused.value || !searchText.value.trim())
+const showDiscovery = computed(
+  () => searchFocused.value || pointerActive.value || !searchText.value.trim(),
+)
+
+// 按下时失焦不能立即移除热词，或让下方待点击的标签改变位置。
+const handlePointerStart = (): void => {
+  pointerActive.value = showDiscovery.value
+}
+const handlePointerEnd = (): void => {
+  window.clearTimeout(pointerReleaseTimer)
+  pointerReleaseTimer = window.setTimeout(() => {
+    pointerActive.value = false
+  }, 0)
+}
+onMounted(() => {
+  window.addEventListener('pointerup', handlePointerEnd)
+  window.addEventListener('pointercancel', handlePointerEnd)
+})
+onUnmounted(() => {
+  window.removeEventListener('pointerup', handlePointerEnd)
+  window.removeEventListener('pointercancel', handlePointerEnd)
+  window.clearTimeout(pointerReleaseTimer)
+})
+
+const handleEnter = (event: KeyboardEvent): void => {
+  if (event.key === 'Enter' && (composing.value || event.isComposing)) event.stopPropagation()
+}
 
 const handleFocusOut = (event: FocusEvent): void => {
   const container = event.currentTarget as HTMLElement
@@ -55,9 +84,15 @@ const handleSelectedSearch = (): Promise<void> => handleSearch(activeIds.value)
 </script>
 
 <template>
-  <div id="searchView">
+  <div id="searchView" @pointerdown="handlePointerStart">
     <div @focusin="searchFocused = true" @focusout="handleFocusOut">
-      <form @submit.prevent>
+      <form
+        @submit.prevent
+        @compositionstart.capture="composing = true"
+        @compositionend.capture="composing = false"
+        @keydown.capture="handleEnter"
+        @keypress.capture="handleEnter"
+      >
         <van-search
           v-model="searchText"
           show-action
