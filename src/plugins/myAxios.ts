@@ -3,7 +3,7 @@ import axios from 'axios'
 const isDev = import.meta.env.MODE !== 'production'
 
 const myAxios = axios.create({
-  baseURL: isDev ? 'http://localhost:8081/api' : '',
+  baseURL: isDev ? 'http://localhost:8081/api' : '/partner-match-api',
 })
 
 myAxios.defaults.withCredentials = true // 配置为true
