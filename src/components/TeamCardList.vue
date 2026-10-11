@@ -2,7 +2,7 @@
   <div id="teamCardList">
     <van-card
       v-for="team in props.teamList"
-      :thumb="ikun"
+      :thumb="teamIllustration"
       :desc="team.description"
       :title="`${team.name}`"
       :key="team.id"
@@ -75,7 +75,7 @@
 <script setup lang="ts">
 import type { TeamType } from '@/models/team.d.ts'
 import { teamStatusEnum } from '@/constants/teamStatus'
-import ikun from '@/assets/ikun.png'
+import teamIllustration from '@/assets/team.svg'
 import { showToast } from 'vant'
 import { ref } from 'vue'
 import { joinTeam, quitTeam, deleteTeam } from '@/api/team'

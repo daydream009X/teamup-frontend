@@ -49,10 +49,10 @@
         <van-field
           v-model="planetCode"
           name="planetCode"
-          label="星球编号"
-          placeholder="请输入星球编号（不超过5位）"
+          label="成员编号"
+          placeholder="请输入成员编号（不超过5位）"
           :formatter="noSpace"
-          :rules="[{ required: true, message: '请填写星球编号' }]"
+          :rules="[{ required: true, message: '请填写成员编号' }]"
         />
       </van-cell-group>
       <div style="margin: 16px">

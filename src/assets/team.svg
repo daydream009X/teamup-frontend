@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">竞赛队伍</title>
+  <rect width="128" height="128" rx="24" fill="#eaf3ff" />
+  <circle cx="34" cy="45" r="13" fill="#6c9bd2" />
+  <circle cx="94" cy="45" r="13" fill="#6c9bd2" />
+  <path d="M14 94V82a20 20 0 0 1 40 0v12zm60 0V82a20 20 0 0 1 40 0v12z" fill="#6c9bd2" />
+  <circle cx="64" cy="54" r="16" fill="#2864ad" />
+  <path d="M39 108V94a25 25 0 0 1 50 0v14z" fill="#2864ad" />
+</svg>

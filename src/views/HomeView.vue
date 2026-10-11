@@ -1,12 +1,15 @@
 <template>
   <div id="homeView">
-    <van-cell center title="极速匹配">
+    <van-cell center title="标签相似匹配" label="按已有标签寻找相似队友">
       <template #right-icon>
         <van-switch v-model="isMatchMode" size="24" />
       </template>
     </van-cell>
     <user-card-list :user-list="userList" :loading="loading" />
-    <van-empty v-if="!userList || userList.length < 1" description="数据为空" />
+    <van-empty
+      v-if="!userList || userList.length < 1"
+      description="暂未找到队友，试试按竞赛或技能标签搜索"
+    />
   </div>
 </template>
 
@@ -30,7 +33,7 @@ const userStore = useUserStore()
 const loadData = async () => {
   let userListData: Record<string, unknown>[] | undefined
   loading.value = true
-  // 极速匹配模式，根据标签匹配用户
+  // 根据已有标签匹配相似队友
   if (isMatchMode.value) {
     const num = 10
     try {

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">灰蓝色成员头像</title>
+  <rect width="128" height="128" rx="32" fill="#edf0f5" />
+  <circle cx="64" cy="46" r="22" fill="#62748b" />
+  <path d="M24 116V98a40 40 0 0 1 80 0v18z" fill="#62748b" />
+</svg>

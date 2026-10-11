@@ -1,14 +1,14 @@
 /**
- * 可选头像列表
+ * 中性本地头像，使用部署基础路径，保证保存到用户资料后的地址稳定。
  */
 const AVATARS: string[] = [
-  'https://www.mydaydream.top/images/default_user_ikun.png',
-  'https://www.mydaydream.top/images/ikun.png',
-  'https://www.mydaydream.top/images/daydream.png',
-  'https://www.mydaydream.top/images/cat_ikun.png',
-  'https://www.mydaydream.top/images/duck_ikun.png',
-  'https://www.mydaydream.top/images/pinkpig_ikun.png',
-  'https://www.mydaydream.top/images/young_ikun.png',
+  `${import.meta.env.BASE_URL}avatars/avatar-blue.svg`,
+  `${import.meta.env.BASE_URL}avatars/avatar-teal.svg`,
+  `${import.meta.env.BASE_URL}avatars/avatar-purple.svg`,
+  `${import.meta.env.BASE_URL}avatars/avatar-amber.svg`,
+  `${import.meta.env.BASE_URL}avatars/avatar-rose.svg`,
+  `${import.meta.env.BASE_URL}avatars/avatar-slate.svg`,
+  `${import.meta.env.BASE_URL}avatars/avatar-green.svg`,
 ]
 
 export default AVATARS

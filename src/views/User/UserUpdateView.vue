@@ -9,13 +9,23 @@
         @click="toEdit('username', '昵称', userStore.currentUser.username)"
       />
       <van-cell title="账号" :value="userStore.currentUser.userAccount" />
-      <van-cell title="头像" is-link @click="toEdit('avatarUrl', '头像', userStore.currentUser.avatarUrl ?? '')">
+      <van-cell
+        title="头像"
+        is-link
+        @click="toEdit('avatarUrl', '头像', userStore.currentUser.avatarUrl ?? '')"
+      >
         <img style="height: 48px" :src="userStore.currentUser.avatarUrl" />
       </van-cell>
       <van-cell
         title="性别"
         is-link
-        :value="userStore.currentUser.gender === 1 ? '男' : userStore.currentUser.gender === 0 ? '女' : '未设置'"
+        :value="
+          userStore.currentUser.gender === 1
+            ? '男'
+            : userStore.currentUser.gender === 0
+              ? '女'
+              : '未设置'
+        "
         @click="toEdit('gender', '性别', String(userStore.currentUser.gender))"
       />
       <van-cell
@@ -32,7 +42,7 @@
         :value="userStore.currentUser.email"
         @click="toEdit('email', '邮箱', userStore.currentUser.email)"
       />
-      <van-cell title="星球编号" :value="userStore.currentUser.planetCode" />
+      <van-cell title="成员编号" :value="userStore.currentUser.planetCode" />
       <van-cell
         title="标签"
         is-link

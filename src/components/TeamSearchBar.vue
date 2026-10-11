@@ -2,7 +2,7 @@
   <div class="search-wrap">
     <van-search
       :model-value="modelValue"
-      placeholder="搜索队伍"
+      placeholder="搜索竞赛队伍，如数学建模、蓝桥杯"
       @update:model-value="$emit('update:modelValue', $event)"
       @clear="$emit('clear')"
     />

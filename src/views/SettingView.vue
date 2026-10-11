@@ -5,7 +5,7 @@
     </van-cell-group>
 
     <van-cell-group inset style="margin-top: 16px">
-      <van-cell title="关于小梦伙伴匹配系统" is-link @click="showAbout" />
+      <van-cell title="关于 TeamUp · 竞赛组队平台" is-link @click="showAbout" />
       <van-cell title="检查更新" is-link @click="showCheckUpdate" />
     </van-cell-group>
 
@@ -58,12 +58,12 @@ const onThemeSelect = (action: ThemeAction) => {
   applyTheme(action.value)
 }
 
-// 关于小梦伙伴匹配系统
+// 关于竞赛组队平台
 const showAbout = () => {
   showDialog({
-    title: '关于小梦伙伴匹配系统',
+    title: '关于 TeamUp · 竞赛组队平台',
     message:
-      '小梦伙伴匹配系统是一款基于兴趣标签和智能算法的伙伴匹配平台。\n\n在这里，你可以创建或加入心仪的队伍，通过标签匹配找到志同道合的伙伴，一起探索属于你们的星球！\n\n版本：v0.1.0（测试版）',
+      'TeamUp 是面向数学建模、程序设计、大创等竞赛的移动端组队平台。\n\n按竞赛和技能标签发现队友，寻找需要的技能，共同创建或加入队伍。标签相似匹配可帮助发现标签相近的伙伴。\n\n版本：v0.1.0（测试版）',
   })
 }
 
