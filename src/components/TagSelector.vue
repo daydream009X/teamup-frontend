@@ -3,10 +3,11 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { showToast } from 'vant'
 
 import { listTags } from '@/api/tag'
+import { COMPETITION_TAGS } from '@/constants/hotTags'
 
 interface TagGroup {
   text: string
-  id: number
+  id: number | string
   children: { text: string; id: string }[]
 }
 
@@ -37,11 +38,29 @@ const LOCKED = new Set(props.lockedTags)
 const lockedTagList = computed(() => selectedTags.value.filter((t) => LOCKED.has(t)))
 const normalTagList = computed(() => selectedTags.value.filter((t) => !LOCKED.has(t)))
 const allTags = computed(() => selectedTags.value)
+const tagGroups = computed<TagGroup[]>(() => {
+  const competitionTags = [
+    ...new Set([
+      ...COMPETITION_TAGS,
+      ...originTagList.value
+        .filter((group) => group.text === '竞赛类别')
+        .flatMap((group) => group.children.map((tag) => tag.id)),
+    ]),
+  ]
+  return [
+    {
+      text: '竞赛类别',
+      id: 'competition',
+      children: competitionTags.map((tag) => ({ text: tag, id: tag })),
+    },
+    ...originTagList.value.filter((group) => group.text !== '竞赛类别'),
+  ]
+})
 const displayTagList = computed(() => {
   if (!filterKeyword.value) {
-    return originTagList.value
+    return tagGroups.value
   }
-  return originTagList.value.map((parentTag) => ({
+  return tagGroups.value.map((parentTag) => ({
     ...parentTag,
     children: parentTag.children.filter((item) => item.text.includes(filterKeyword.value)),
   }))
@@ -113,6 +132,12 @@ onMounted(() => {
 
 onUnmounted(() => {
   active = false
+})
+
+watch(displayTagList, (groups) => {
+  if (groups[activeIndex.value]?.children.length) return
+  const firstMatch = groups.findIndex((group) => group.children.length > 0)
+  activeIndex.value = Math.max(firstMatch, 0)
 })
 
 // 监听外部 v-model 变化，同步到内部
