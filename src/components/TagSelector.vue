@@ -3,7 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { showToast } from 'vant'
 
 import { listTags } from '@/api/tag'
-import { COMPETITION_TAGS } from '@/constants/hotTags'
+import { COMPETITION_TAGS, TECHNICAL_TAGS } from '@/constants/hotTags'
 
 interface TagGroup {
   text: string
@@ -47,13 +47,28 @@ const tagGroups = computed<TagGroup[]>(() => {
         .flatMap((group) => group.children.map((tag) => tag.id)),
     ]),
   ]
+  const technicalTags = [
+    ...new Set([
+      ...originTagList.value
+        .filter((group) => group.text === '技术方向')
+        .flatMap((group) => group.children.map((tag) => tag.id)),
+      ...TECHNICAL_TAGS,
+    ]),
+  ]
   return [
     {
       text: '竞赛类别',
       id: 'competition',
       children: competitionTags.map((tag) => ({ text: tag, id: tag })),
     },
-    ...originTagList.value.filter((group) => group.text !== '竞赛类别'),
+    {
+      text: '技术方向',
+      id: 'technical',
+      children: technicalTags.map((tag) => ({ text: tag, id: tag })),
+    },
+    ...originTagList.value.filter(
+      (group) => group.text !== '竞赛类别' && group.text !== '技术方向',
+    ),
   ]
 })
 const displayTagList = computed(() => {
