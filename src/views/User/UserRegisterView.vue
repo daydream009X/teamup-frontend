@@ -56,7 +56,9 @@
         />
       </van-cell-group>
       <div style="margin: 16px">
-        <van-button round block type="primary" native-type="submit"> 注册 </van-button>
+        <van-button round block type="primary" native-type="submit" :loading="submitting">
+          注册
+        </van-button>
       </div>
     </van-form>
     <div class="to-login">
@@ -80,6 +82,7 @@ const checkPassword = ref('')
 const planetCode = ref('')
 const passwordVisible = ref(false)
 const checkPasswordVisible = ref(false)
+const submitting = ref(false)
 
 // 去除空格
 const noSpace = (val: string) => val.replace(/\s/g, '')
@@ -88,20 +91,31 @@ const noSpaceValidator = (val: string) => !/\s/.test(val)
 const checkPasswordValidator = (val: string) => val === userPassword.value
 
 const onSubmit = async () => {
-  const randomSuffix = Math.floor(Math.random() * 9000000) + 1000000
-  const defaultUsername = '用户' + randomSuffix
-  const res = await register({
-    userAccount: userAccount.value,
-    userPassword: userPassword.value,
-    checkPassword: checkPassword.value,
-    planetCode: planetCode.value,
-    username: defaultUsername,
-  })
-  if (res?.code === 0) {
-    showToast('注册成功')
-    router.push('/user/login')
-  } else {
-    showToast('注册失败' + (res?.description ? '，' + res.description : ''))
+  if (submitting.value) return
+  submitting.value = true
+  try {
+    const randomSuffix = Math.floor(Math.random() * 9000000) + 1000000
+    const defaultUsername = '用户' + randomSuffix
+    const res = await register({
+      userAccount: userAccount.value,
+      userPassword: userPassword.value,
+      checkPassword: checkPassword.value,
+      planetCode: planetCode.value,
+      username: defaultUsername,
+    })
+    const userId = Number(res?.data)
+    if (res?.code === 0 && Number.isSafeInteger(userId) && userId > 0) {
+      showToast('注册成功')
+      await router.push('/user/login')
+    } else {
+      showToast(
+        res?.description || (res?.code !== 0 && res?.message) || '注册失败，请检查账号和密码',
+      )
+    }
+  } catch {
+    showToast('注册请求失败，请检查网络后重试')
+  } finally {
+    submitting.value = false
   }
 }
 </script>

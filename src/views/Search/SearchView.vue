@@ -75,8 +75,9 @@ const handleSearch = async (tags: string[]): Promise<void> => {
 
 const handleKeywordSearch = (keyword: string): Promise<void> => {
   const value = keyword.trim()
+  if (!value) return handleSearch([])
   searchText.value = value
-  activeIds.value = value ? [value] : []
+  activeIds.value = [value]
   return handleSearch(activeIds.value)
 }
 

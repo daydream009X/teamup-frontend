@@ -4,6 +4,7 @@
       :model-value="modelValue"
       placeholder="搜索竞赛队伍，如数学建模、蓝桥杯"
       @update:model-value="$emit('update:modelValue', $event)"
+      @search="$emit('search')"
       @clear="$emit('clear')"
     />
     <van-button class="search-btn" type="primary" @click="$emit('search')">搜索</van-button>

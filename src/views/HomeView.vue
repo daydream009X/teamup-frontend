@@ -1,21 +1,7 @@
-<template>
-  <div id="homeView">
-    <van-cell center title="标签相似匹配" label="按已有标签寻找相似队友">
-      <template #right-icon>
-        <van-switch v-model="isMatchMode" size="24" />
-      </template>
-    </van-cell>
-    <user-card-list :user-list="userList" :loading="loading" />
-    <van-empty
-      v-if="!userList || userList.length < 1"
-      description="暂未找到队友，试试按竞赛或技能标签搜索"
-    />
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { showToast } from 'vant'
+
 import UserCardList from '@/components/UserCardList.vue'
 import { matchUsers, recommendUsers } from '@/api/user'
 import type { UserType } from '@/models/user.d.ts'
@@ -24,60 +10,83 @@ import { useUserStore } from '@/stores/user'
 const isMatchMode = ref<boolean>(false)
 
 const userList = ref<UserType[]>([])
-const loading = ref(true)
+const loading = ref<boolean>(true)
+const errorMessage = ref<string>('')
+const retryCount = ref<number>(0)
 const userStore = useUserStore()
+const visibleUsers = computed(() =>
+  userList.value.filter((user) => user.id !== userStore.currentUser?.id),
+)
 
-/**
- * 加载数据
- */
-const loadData = async () => {
-  let userListData: Record<string, unknown>[] | undefined
-  loading.value = true
-  // 根据已有标签匹配相似队友
-  if (isMatchMode.value) {
-    const num = 10
+const normalizeTags = (raw: unknown): string[] => {
+  let tags = raw
+  if (typeof tags === 'string') {
     try {
-      const res = await matchUsers(num)
-      console.log('/user/match succeed', res)
-      userListData = res?.data as unknown as Record<string, unknown>[]
-    } catch (error) {
-      console.error('/user/match error', error)
-      showToast('请求失败')
-    }
-  } else {
-    // 普通模式，直接分页查询用户
-    try {
-      const res = await recommendUsers(8, 1)
-      console.log('/user/recommend succeed', res)
-      userListData = (res?.data as Record<string, unknown>)?.records as unknown as Record<
-        string,
-        unknown
-      >[]
-    } catch (error) {
-      console.error('/user/recommend error', error)
-      showToast('请求失败')
+      tags = JSON.parse(tags)
+    } catch {
+      return []
     }
   }
-  if (userListData) {
-    userListData.forEach((user: Record<string, unknown>) => {
-      if (user.tags) {
-        user.tags = JSON.parse(user.tags as string)
-      }
-    })
-    userList.value = userListData as UserType[]
-    if (userStore.currentUser) {
-      userList.value = userList.value.filter((u) => u.id !== userStore.currentUser?.id)
-    }
-  }
-  loading.value = false
+  return Array.isArray(tags) ? tags.filter((tag): tag is string => typeof tag === 'string') : []
 }
 
-watchEffect(() => {
-  loadData()
-})
+watch(
+  [isMatchMode, retryCount],
+  async ([matchMode], _previous, onCleanup) => {
+    let active = true
+    onCleanup(() => {
+      active = false
+    })
+    userList.value = []
+    errorMessage.value = ''
+    loading.value = true
+    try {
+      const response = matchMode ? await matchUsers(10) : await recommendUsers(8, 1)
+      if (!active) return
+      const data = matchMode
+        ? response.data
+        : (response.data as { records?: unknown } | null)?.records
+      if (response.code !== 0 || !Array.isArray(data)) {
+        errorMessage.value = response.description || response.message || '获取队友失败，请稍后重试'
+        showToast(errorMessage.value)
+        return
+      }
+      userList.value = data.map((user: UserType) => ({ ...user, tags: normalizeTags(user.tags) }))
+    } catch {
+      if (active) {
+        errorMessage.value = '获取队友失败，请检查网络后重试'
+        showToast(errorMessage.value)
+      }
+    } finally {
+      if (active) loading.value = false
+    }
+  },
+  { immediate: true },
+)
 </script>
 
+<template>
+  <div id="homeView" :aria-busy="loading">
+    <van-cell center title="标签相似匹配" label="按已有标签寻找相似队友">
+      <template #right-icon>
+        <van-switch v-model="isMatchMode" size="24" />
+      </template>
+    </van-cell>
+    <van-skeleton v-if="loading" title avatar :row="3" class="home-loading" />
+    <UserCardList v-else :user-list="visibleUsers" :loading="false" />
+    <van-empty
+      v-if="!loading && !visibleUsers.length"
+      :description="errorMessage || '暂未找到队友，试试按竞赛或技能标签搜索'"
+    >
+      <van-button v-if="errorMessage" type="primary" size="small" @click="retryCount++">
+        重试
+      </van-button>
+    </van-empty>
+  </div>
+</template>
+
 <style scoped>
-#homeView {
+.home-loading {
+  padding: 16px;
 }
 </style>

@@ -1,3 +1,134 @@
+<script setup lang="ts">
+import type { TeamType } from '@/models/team.d.ts'
+import { teamStatusEnum } from '@/constants/teamStatus'
+import teamIllustration from '@/assets/team.svg'
+import { showToast } from 'vant'
+import { onUnmounted, ref } from 'vue'
+import { joinTeam, quitTeam, deleteTeam } from '@/api/team'
+import { useRouter } from 'vue-router'
+import { formatDateTime } from '@/utils/dateUtils'
+import { useUserStore } from '@/stores/user'
+
+interface TeamCardListProps {
+  teamList: TeamType[]
+}
+
+const props = withDefaults(defineProps<TeamCardListProps>(), {
+  teamList: () => [],
+})
+
+const emit = defineEmits<{
+  refresh: []
+}>()
+
+const showPasswordDialog = ref(false)
+const password = ref('')
+const joinTeamId = ref(0)
+const pendingTeamId = ref<number | null>(null)
+let active = true
+const router = useRouter()
+const userStore = useUserStore()
+
+const preJoinTeam = (team: TeamType) => {
+  if (!active || pendingTeamId.value !== null) return
+  joinTeamId.value = team.id
+  password.value = ''
+  if (team.status === 0) {
+    void doJoinTeam()
+  } else {
+    showPasswordDialog.value = true
+  }
+}
+
+const doJoinCancel = () => {
+  joinTeamId.value = 0
+  password.value = ''
+}
+
+const runTeamAction = async (
+  teamId: number,
+  request: () => ReturnType<typeof joinTeam>,
+  successMessage: string,
+  failureMessage: string,
+  onSuccess?: () => void,
+): Promise<boolean> => {
+  if (!active || pendingTeamId.value !== null) return false
+  pendingTeamId.value = teamId
+  try {
+    const res = await request()
+    if (!active) return false
+    if (res?.code === 0) {
+      onSuccess?.()
+      showToast(successMessage)
+      emit('refresh')
+      return true
+    }
+    showToast(failureMessage + (res?.description ? `，${res.description}` : ''))
+    return false
+  } catch {
+    if (active) showToast(`${failureMessage}，请检查网络后重试`)
+    return false
+  } finally {
+    if (active) pendingTeamId.value = null
+  }
+}
+
+/**
+ * 加入队伍
+ */
+const doJoinTeam = (): Promise<boolean> => {
+  const teamId = joinTeamId.value
+  const teamPassword = password.value
+  if (!teamId) return Promise.resolve(false)
+  return runTeamAction(
+    teamId,
+    () => joinTeam({ teamId, password: teamPassword }),
+    '加入成功',
+    '加入失败',
+    doJoinCancel,
+  )
+}
+
+const onPasswordDialogClose = async (action: string): Promise<boolean> => {
+  if (!active || pendingTeamId.value !== null) return false
+  if (action === 'confirm') return doJoinTeam()
+  doJoinCancel()
+  return true
+}
+
+/**
+ * 跳转至更新队伍页
+ * @param id
+ */
+const doUpdateTeam = (id: number) => {
+  if (!active || pendingTeamId.value !== null) return
+  router.push({
+    path: '/team/update',
+    query: {
+      id,
+    },
+  })
+}
+
+/**
+ * 退出队伍
+ * @param id
+ */
+const doQuitTeam = (id: number): Promise<boolean> =>
+  runTeamAction(id, () => quitTeam(id), '退出成功', '退出失败')
+
+/**
+ * 解散队伍
+ * @param id
+ */
+const doDeleteTeam = (id: number): Promise<boolean> =>
+  runTeamAction(id, () => deleteTeam(id), '解散成功', '解散失败')
+
+onUnmounted(() => {
+  active = false
+})
+</script>
+
 <template>
   <div id="teamCardList">
     <van-card
@@ -30,6 +161,8 @@
           type="primary"
           v-if="team.userId !== userStore.currentUser?.id && !team.hasJoin"
           plain
+          :loading="pendingTeamId === team.id"
+          :disabled="pendingTeamId !== null"
           @click="preJoinTeam(team)"
         >
           加入队伍
@@ -38,6 +171,7 @@
           v-if="team.userId === userStore.currentUser?.id"
           size="small"
           plain
+          :disabled="pendingTeamId !== null"
           @click="doUpdateTeam(team.id)"
           >更新队伍
         </van-button>
@@ -47,6 +181,8 @@
           size="small"
           plain
           type="danger"
+          :loading="pendingTeamId === team.id"
+          :disabled="pendingTeamId !== null"
           @click="doQuitTeam(team.id)"
           >退出队伍
         </van-button>
@@ -55,6 +191,8 @@
           size="small"
           type="danger"
           plain
+          :loading="pendingTeamId === team.id"
+          :disabled="pendingTeamId !== null"
           @click="doDeleteTeam(team.id)"
           >解散队伍
         </van-button>
@@ -64,118 +202,14 @@
       v-model:show="showPasswordDialog"
       title="请输入密码"
       show-cancel-button
-      @confirm="doJoinTeam"
-      @cancel="doJoinCancel"
+      :before-close="onPasswordDialogClose"
+      :confirm-button-disabled="pendingTeamId !== null"
+      :cancel-button-disabled="pendingTeamId !== null"
     >
-      <van-field v-model="password" placeholder="请输入密码" />
+      <van-field v-model="password" placeholder="请输入密码" :disabled="pendingTeamId !== null" />
     </van-dialog>
   </div>
 </template>
-
-<script setup lang="ts">
-import type { TeamType } from '@/models/team.d.ts'
-import { teamStatusEnum } from '@/constants/teamStatus'
-import teamIllustration from '@/assets/team.svg'
-import { showToast } from 'vant'
-import { ref } from 'vue'
-import { joinTeam, quitTeam, deleteTeam } from '@/api/team'
-import { useRouter } from 'vue-router'
-import { formatDateTime } from '@/utils/dateUtils'
-import { useUserStore } from '@/stores/user'
-
-interface TeamCardListProps {
-  teamList: TeamType[]
-}
-
-const props = withDefaults(defineProps<TeamCardListProps>(), {
-  teamList: () => [],
-})
-
-const emit = defineEmits<{
-  refresh: []
-}>()
-
-const showPasswordDialog = ref(false)
-const password = ref('')
-const joinTeamId = ref(0)
-const router = useRouter()
-const userStore = useUserStore()
-
-const preJoinTeam = (team: TeamType) => {
-  joinTeamId.value = team.id
-  if (team.status === 0) {
-    doJoinTeam()
-  } else {
-    showPasswordDialog.value = true
-  }
-}
-
-const doJoinCancel = () => {
-  joinTeamId.value = 0
-  password.value = ''
-}
-
-/**
- * 加入队伍
- */
-const doJoinTeam = async () => {
-  if (!joinTeamId.value) {
-    return
-  }
-  const res = await joinTeam({
-    teamId: joinTeamId.value,
-    password: password.value,
-  })
-  if (res?.code === 0) {
-    showToast('加入成功')
-    doJoinCancel()
-    emit('refresh')
-  } else {
-    showToast('加入失败' + (res?.description ? `,${res.description}` : ''))
-  }
-}
-
-/**
- * 跳转至更新队伍页
- * @param id
- */
-const doUpdateTeam = (id: number) => {
-  router.push({
-    path: '/team/update',
-    query: {
-      id,
-    },
-  })
-}
-
-/**
- * 退出队伍
- * @param id
- */
-const doQuitTeam = async (id: number) => {
-  const res = await quitTeam(id)
-  if (res?.code === 0) {
-    showToast('操作成功')
-    emit('refresh')
-  } else {
-    showToast('操作失败' + (res?.description ? `,${res.description}` : ''))
-  }
-}
-
-/**
- * 解散队伍
- * @param id
- */
-const doDeleteTeam = async (id: number) => {
-  const res = await deleteTeam(id)
-  if (res?.code === 0) {
-    showToast('操作成功')
-    emit('refresh')
-  } else {
-    showToast('操作失败' + (res?.description ? `,${res.description}` : ''))
-  }
-}
-</script>
 
 <style scoped>
 #teamCardList {

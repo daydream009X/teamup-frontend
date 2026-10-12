@@ -20,9 +20,11 @@
         <van-field
           is-link
           readonly
-          name="datetimePicker"
+          name="expireTime"
           label="过期时间"
-          :placeholder="addTeamData.expireTime ?? '点击选择过期时间'"
+          :model-value="addTeamData.expireTime"
+          placeholder="点击选择过期时间"
+          :rules="[{ required: true, message: '请选择过期时间' }]"
           @click="showPicker = true"
         />
         <van-popup v-model:show="showPicker" position="bottom">
@@ -30,7 +32,7 @@
             v-model="currentDate"
             @confirm="onDateConfirm"
             title="请选择过期日期"
-            :min="minDate"
+            :min-date="minDate"
           />
         </van-popup>
         <van-field name="stepper" label="最大人数">
@@ -58,7 +60,9 @@
         />
       </van-cell-group>
       <div style="margin: 16px">
-        <van-button round block type="primary" native-type="submit"> 提交 </van-button>
+        <van-button round block type="primary" native-type="submit" :loading="submitting">
+          提交
+        </van-button>
       </div>
     </van-form>
   </div>
@@ -74,6 +78,7 @@ const router = useRouter()
 // 展示日期选择器
 const showPicker = ref(false)
 const currentDate = ref<string[]>([])
+const submitting = ref(false)
 
 const initFormData = {
   name: '',
@@ -98,20 +103,33 @@ const onDateConfirm = () => {
 
 // 提交
 const onSubmit = async () => {
+  if (submitting.value) return
+  const expireTime = addTeamData.value.expireTime
+  if (!expireTime || !(new Date(expireTime).getTime() > Date.now())) {
+    showToast('请选择晚于当前时间的过期日期')
+    return
+  }
   const postData = {
     ...addTeamData.value,
     status: Number(addTeamData.value.status),
   }
 
-  const res = await addTeam(postData)
-  if (res?.code === 0 && res.data) {
-    showToast('添加成功')
-    router.push({
-      path: '/team',
-      replace: true,
-    })
-  } else {
-    showToast('添加失败')
+  submitting.value = true
+  try {
+    const res = await addTeam(postData)
+    if (res?.code === 0 && res.data) {
+      showToast('添加成功')
+      await router.push({
+        path: '/team',
+        replace: true,
+      })
+    } else {
+      showToast(res?.description || res?.message || '添加失败')
+    }
+  } catch {
+    showToast('添加失败，请检查网络后重试')
+  } finally {
+    submitting.value = false
   }
 }
 </script>

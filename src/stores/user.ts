@@ -23,15 +23,24 @@ export const useUserStore = defineStore('user', () => {
   const loading = ref(false)
   const initialized = ref(false)
   let currentUserRequest: Promise<UserType | null> | null = null
+  let currentUserVersion = 0
 
   const isLogin = computed(() => currentUser.value !== null)
 
+  const invalidateCurrentUserRequest = () => {
+    currentUserVersion++
+    currentUserRequest = null
+    loading.value = false
+  }
+
   const setCurrentUser = (user: UserType) => {
+    invalidateCurrentUserRequest()
     currentUser.value = normalizeUser(user)
     initialized.value = true
   }
 
   const clearCurrentUser = () => {
+    invalidateCurrentUserRequest()
     currentUser.value = null
     initialized.value = true
   }
@@ -46,8 +55,10 @@ export const useUserStore = defineStore('user', () => {
     }
 
     loading.value = true
-    currentUserRequest = getCurrentUser()
+    const requestVersion = currentUserVersion
+    const request: Promise<UserType | null> = getCurrentUser()
       .then((user) => {
+        if (requestVersion !== currentUserVersion) return currentUser.value
         if (user) {
           setCurrentUser(user)
         } else {
@@ -55,12 +66,19 @@ export const useUserStore = defineStore('user', () => {
         }
         return currentUser.value
       })
-      .finally(() => {
-        loading.value = false
-        currentUserRequest = null
+      .catch((error: unknown) => {
+        if (requestVersion !== currentUserVersion) return currentUser.value
+        throw error
       })
+      .finally(() => {
+        if (currentUserRequest === request) {
+          loading.value = false
+          currentUserRequest = null
+        }
+      })
+    currentUserRequest = request
 
-    return currentUserRequest
+    return request
   }
 
   const refreshCurrentUser = () => fetchCurrentUser(true)

@@ -10,20 +10,17 @@ export const listTeams = (params: { searchText?: string; pageNum?: number; statu
 /**
  * 创建队伍
  */
-export const addTeam = (data: Record<string, unknown>) =>
-  myAxios.post('/team/add', data)
+export const addTeam = (data: Record<string, unknown>) => myAxios.post('/team/add', data)
 
 /**
  * 获取队伍详情
  */
-export const getTeam = (id: number | string) =>
-  myAxios.get('/team/get', { params: { id } })
+export const getTeam = (id: number | string) => myAxios.get('/team/get', { params: { id } })
 
 /**
  * 更新队伍
  */
-export const updateTeam = (data: Record<string, unknown>) =>
-  myAxios.post('/team/update', data)
+export const updateTeam = (data: Record<string, unknown>) => myAxios.post('/team/update', data)
 
 /**
  * 加入队伍
@@ -34,14 +31,12 @@ export const joinTeam = (data: { teamId: number; password?: string }) =>
 /**
  * 退出队伍
  */
-export const quitTeam = (teamId: number) =>
-  myAxios.post('/team/quit', { teamId })
+export const quitTeam = (teamId: number) => myAxios.post('/team/quit', { teamId })
 
 /**
  * 解散队伍
  */
-export const deleteTeam = (id: number) =>
-  myAxios.post('/team/delete', { id })
+export const deleteTeam = (id: number) => myAxios.post('/team/delete', { id })
 
 /**
  * 我加入的队伍（按状态分别查询后合并）
@@ -53,11 +48,12 @@ export const listMyJoinTeams = async (params: { searchText?: string; pageNum?: n
     myAxios.get<TeamType[]>('/team/list/my/join', { params: { ...baseParams, status: 1 } }),
     myAxios.get<TeamType[]>('/team/list/my/join', { params: { ...baseParams, status: 2 } }),
   ])
-  const allTeams = results
-    .filter((res) => res?.code === 0)
-    .flatMap((res) =>
-      ((res.data as unknown as TeamType[]) || []).map((t) => ({ ...t, hasJoin: true })),
-    )
+  const allTeams = results.flatMap((res) => {
+    if (res.code !== 0 || !Array.isArray(res.data)) {
+      throw new Error(res.description || res.message || '加载已加入队伍失败，请稍后重试')
+    }
+    return res.data.map((team) => ({ ...team, hasJoin: true }))
+  })
   return allTeams
 }
 
@@ -71,8 +67,11 @@ export const listMyCreateTeams = async (params: { searchText?: string; pageNum?:
     myAxios.get<TeamType[]>('/team/list/my/create', { params: { ...baseParams, status: 1 } }),
     myAxios.get<TeamType[]>('/team/list/my/create', { params: { ...baseParams, status: 2 } }),
   ])
-  const allTeams = results
-    .filter((res) => res?.code === 0)
-    .flatMap((res) => (res.data as unknown as TeamType[]) || [])
+  const allTeams = results.flatMap((res) => {
+    if (res.code !== 0 || !Array.isArray(res.data)) {
+      throw new Error(res.description || res.message || '加载已创建队伍失败，请稍后重试')
+    }
+    return res.data
+  })
   return allTeams
 }

@@ -1,8 +1,13 @@
 <template>
-  <div id="userTeamJoinView">
+  <div id="userTeamJoinView" :aria-busy="loading">
     <team-search-bar v-model="searchText" @search="doSearch" @clear="onClear" />
-    <team-card-list :teamList="teamList" @refresh="onRefresh" />
-    <van-empty v-if="teamList?.length < 1" description="数据为空" />
+    <van-skeleton v-if="loading" title :row="3" class="team-loading" />
+    <team-card-list v-else :teamList="teamList" @refresh="onRefresh" />
+    <van-empty v-if="!loading && !teamList.length" :description="errorMessage || '数据为空'">
+      <van-button v-if="errorMessage" type="primary" size="small" @click="onRefresh">
+        重试
+      </van-button>
+    </van-empty>
   </div>
 </template>
 
@@ -11,22 +16,13 @@ import TeamCardList from '@/components/TeamCardList.vue'
 import TeamSearchBar from '@/components/TeamSearchBar.vue'
 import { onMounted, ref } from 'vue'
 import { listMyJoinTeams } from '@/api/team'
-import type { TeamType } from '@/models/team.d.ts'
+import { useTeamList } from '@/composables/useTeamList'
 
 const searchText = ref('')
 
-const teamList = ref<TeamType[]>([])
-
-/**
- * 搜索队伍
- * @param val
- * @returns {Promise<void>}
- */
-const listTeam = async (val = '') => {
-  const baseParams = { searchText: val, pageNum: 1 }
-  const allTeams = await listMyJoinTeams(baseParams)
-  teamList.value = allTeams
-}
+const { teamList, loading, errorMessage, listTeam } = useTeamList((val) =>
+  listMyJoinTeams({ searchText: val, pageNum: 1 }),
+)
 
 // 页面加载时只触发一次
 onMounted(() => {
@@ -48,5 +44,8 @@ const onRefresh = () => {
 
 <style scoped>
 #userTeamJoinView {
+}
+.team-loading {
+  padding: 16px;
 }
 </style>

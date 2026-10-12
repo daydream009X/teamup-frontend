@@ -1,12 +1,17 @@
 <template>
-  <div id="userTeamCreateView">
+  <div id="userTeamCreateView" :aria-busy="loading">
     <team-search-bar v-model="searchText" @search="doSearch" @clear="onClear" />
     <div class="create-action">
       <van-button type="primary" block @click="doJoinTeam">创建队伍</van-button>
     </div>
     <div class="team-list">
-      <team-card-list :teamList="teamList" @refresh="onRefresh" />
-      <van-empty v-if="teamList?.length < 1" description="数据为空" />
+      <van-skeleton v-if="loading" title :row="3" class="team-loading" />
+      <team-card-list v-else :teamList="teamList" @refresh="onRefresh" />
+      <van-empty v-if="!loading && !teamList.length" :description="errorMessage || '数据为空'">
+        <van-button v-if="errorMessage" type="primary" size="small" @click="onRefresh">
+          重试
+        </van-button>
+      </van-empty>
     </div>
   </div>
 </template>
@@ -17,7 +22,7 @@ import TeamCardList from '@/components/TeamCardList.vue'
 import TeamSearchBar from '@/components/TeamSearchBar.vue'
 import { onMounted, ref } from 'vue'
 import { listMyCreateTeams } from '@/api/team'
-import type { TeamType } from '@/models/team.d.ts'
+import { useTeamList } from '@/composables/useTeamList'
 
 const router = useRouter()
 const searchText = ref('')
@@ -29,18 +34,9 @@ const doJoinTeam = () => {
   })
 }
 
-const teamList = ref<TeamType[]>([])
-
-/**
- * 搜索队伍
- * @param val
- * @returns {Promise<void>}
- */
-const listTeam = async (val = '') => {
-  const baseParams = { searchText: val, pageNum: 1 }
-  const allTeams = await listMyCreateTeams(baseParams)
-  teamList.value = allTeams
-}
+const { teamList, loading, errorMessage, listTeam } = useTeamList((val) =>
+  listMyCreateTeams({ searchText: val, pageNum: 1 }),
+)
 
 // 页面加载时只触发一次
 onMounted(() => {
@@ -62,6 +58,9 @@ const onRefresh = () => {
 
 <style scoped>
 #userTeamCreateView {
+}
+.team-loading {
+  padding: 16px;
 }
 .create-action {
   padding: 16px;
