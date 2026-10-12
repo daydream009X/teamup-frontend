@@ -34,7 +34,7 @@ TeamUp 是面向数学建模、程序设计、大创等竞赛的移动端组队�
                       └─ Redis：Session、推荐缓存与 Redisson 分布式锁
 ```
 
-前端使用 Vite 构建，现有部署基础路径为 `/xiaomeng-partner-match/`，生产 API 基地址为 `/partner-match-api`。品牌更名为 TeamUp 后仍保留这两个路径，以兼容现有部署；仓库目录名和后端协议字段也不因界面更名而改变。
+前端使用 Vite 构建，演示部署基础路径为 `/teamup/`，Vue Router 使用 `createWebHistory(import.meta.env.BASE_URL)` 与 Vite 的 `base` 自动同步。生产 API 基地址仍为 `/partner-match-api`；仓库目录名和后端协议字段不因界面更名而改变。
 
 开发 API 基地址为 `http://localhost:8081/api`，配置见 `src/plugins/myAxios.ts`。Axios 携带 Cookie，登录态由服务端 Session 维护；前端 Store 共享当前用户请求，并区分未登录与网络异常。
 
@@ -66,18 +66,15 @@ location /partner-match-api/ {
     proxy_pass http://127.0.0.1:8081/api/;
     proxy_cookie_path /api /partner-match-api;
 }
-
-# 假设 dist 已放在站点根目录对应的 xiaomeng-partner-match 子目录
-location /xiaomeng-partner-match/ {
-    try_files $uri $uri/ /xiaomeng-partner-match/index.html;
-}
 ```
 
 ### 同域多个项目的子路径共存
 
 多个前端共用域名时，只改路由前缀不够：静态资源地址、Vue Router 的 history base、页面刷新回退地址和 API 代理前缀也需要对应。项目使用 Vite 的 `base` 和 `createWebHistory(import.meta.env.BASE_URL)` 保持一致，登录回跳使用站内路径，避免丢失子目录或跳到外站。
 
-本次更名保留现有部署路径；可选头像按使用偏好恢复原图片地址，先前本地头像资源仍保留以兼容已保存的资料。多个后端共用同域 Session Cookie 时，还需核对 Cookie 的名称、Path 和服务端 Session 隔离，避免其他项目的登录态互相覆盖。
+本次按新版任务书将前端子路径迁移为 `/teamup/`。服务器 Nginx 的页面 location 前缀和 SPA 刷新回退地址需由维护者人工同步为 `/teamup/` 与 `/teamup/index.html`，原有 dist 目录映射保持不变；本次没有操作服务器，API location 与 Cookie Path 也不随页面子路径更换。
+
+可选头像按使用偏好保留原图片地址；先前本地头像资源仍保留。若已有资料保存了旧子路径的本地头像地址，服务器需保留这些旧资源 URL 的兼容映射，本次不改数据库中的头像值。多个后端共用同域 Session Cookie 时，还需核对 Cookie 的名称、Path 和服务端 Session 隔离，避免其他项目的登录态互相覆盖。
 
 ### qs 数组参数与 Spring Boot 绑定
 
@@ -130,7 +127,7 @@ pnpm build
 pnpm preview
 ```
 
-开发页面路径为开发服务器地址下的 `/xiaomeng-partner-match/`。生产预览仍使用 `/partner-match-api`，需要对应的反向代理才能联调 API；Vite 的 `preview` 仅提供静态资源。
+开发页面路径为开发服务器地址下的 `/teamup/`。运行 `pnpm build` 和 `pnpm preview` 后，可在预览地址的 `/teamup/`、`/teamup/search` 等路径检查页面、静态资源与刷新；Vue Router 使用同一基础路径。生产预览仍使用 `/partner-match-api`，需要对应的反向代理才能联调 API；Vite 的 `preview` 仅提供静态资源。
 
 Windows PowerShell 若拦截 `npm.ps1`，可改用 `npm.cmd ci`、`npm.cmd run dev`、`npm.cmd run build`。质量检查可运行 `npm run type-check` 和 `npm run lint`；后者带自动修复，检查前应保留工作区状态。
 
