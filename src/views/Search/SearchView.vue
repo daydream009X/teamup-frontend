@@ -1,3 +1,74 @@
+<template>
+  <div id="searchView" @pointerdown="handlePointerStart">
+    <div @focusin="searchFocused = true" @focusout="handleFocusOut">
+      <form
+        @submit.prevent
+        @compositionstart.capture="composing = true"
+        @compositionend.capture="composing = false"
+        @keydown.capture="handleEnter"
+        @keypress.capture="handleEnter"
+      >
+        <van-search
+          v-model="searchText"
+          show-action
+          placeholder="搜索数学建模、算法、前端等技能标签"
+          @update:model-value="handleFilter"
+          @search="handleKeywordSearch"
+          @cancel="handleCancel"
+        />
+      </form>
+      <div v-if="showDiscovery" class="search-discovery">
+        <section aria-labelledby="history-heading" class="discovery-section">
+          <div class="section-heading">
+            <h2 id="history-heading">搜索历史</h2>
+            <van-button v-if="history.length" size="mini" plain type="danger" @click="clearHistory">
+              清空历史
+            </van-button>
+          </div>
+          <div v-if="history.length" class="tag-cloud">
+            <span v-for="keyword in history" :key="keyword" class="history-item">
+              <button class="tag-button" type="button" @click="handleKeywordSearch(keyword)">
+                <van-tag plain type="primary">{{ keyword }}</van-tag>
+              </button>
+              <button
+                class="delete-button"
+                type="button"
+                :aria-label="`删除搜索历史：${keyword}`"
+                @click.stop="removeHistory(keyword)"
+              >
+                <van-icon name="cross" />
+              </button>
+            </span>
+          </div>
+          <p v-else class="section-hint">暂无搜索历史，搜索成功后会自动记录</p>
+        </section>
+        <section aria-labelledby="hot-tags-heading" class="discovery-section">
+          <div class="section-heading">
+            <h2 id="hot-tags-heading">热门标签</h2>
+            <span class="section-hint">竞赛与技能推荐</span>
+          </div>
+          <div class="tag-cloud">
+            <button
+              v-for="tag in HOT_TAGS"
+              :key="tag"
+              class="tag-button"
+              type="button"
+              @click="handleKeywordSearch(tag)"
+            >
+              <van-tag plain type="primary">{{ tag }}</van-tag>
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+    <p class="search-help">输入完整标签可直接搜索，也可在下方多选技能寻找队友</p>
+    <TagSelector ref="tagSelectorRef" v-model="activeIds" />
+    <div class="search-action">
+      <van-button block type="primary" @click="handleSelectedSearch">按已选标签搜索</van-button>
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -83,77 +154,6 @@ const handleKeywordSearch = (keyword: string): Promise<void> => {
 
 const handleSelectedSearch = (): Promise<void> => handleSearch(activeIds.value)
 </script>
-
-<template>
-  <div id="searchView" @pointerdown="handlePointerStart">
-    <div @focusin="searchFocused = true" @focusout="handleFocusOut">
-      <form
-        @submit.prevent
-        @compositionstart.capture="composing = true"
-        @compositionend.capture="composing = false"
-        @keydown.capture="handleEnter"
-        @keypress.capture="handleEnter"
-      >
-        <van-search
-          v-model="searchText"
-          show-action
-          placeholder="搜索数学建模、算法、前端等技能标签"
-          @update:model-value="handleFilter"
-          @search="handleKeywordSearch"
-          @cancel="handleCancel"
-        />
-      </form>
-      <div v-if="showDiscovery" class="search-discovery">
-        <section aria-labelledby="history-heading" class="discovery-section">
-          <div class="section-heading">
-            <h2 id="history-heading">搜索历史</h2>
-            <van-button v-if="history.length" size="mini" plain type="danger" @click="clearHistory">
-              清空历史
-            </van-button>
-          </div>
-          <div v-if="history.length" class="tag-cloud">
-            <span v-for="keyword in history" :key="keyword" class="history-item">
-              <button class="tag-button" type="button" @click="handleKeywordSearch(keyword)">
-                <van-tag plain type="primary">{{ keyword }}</van-tag>
-              </button>
-              <button
-                class="delete-button"
-                type="button"
-                :aria-label="`删除搜索历史：${keyword}`"
-                @click.stop="removeHistory(keyword)"
-              >
-                <van-icon name="cross" />
-              </button>
-            </span>
-          </div>
-          <p v-else class="section-hint">暂无搜索历史，搜索成功后会自动记录</p>
-        </section>
-        <section aria-labelledby="hot-tags-heading" class="discovery-section">
-          <div class="section-heading">
-            <h2 id="hot-tags-heading">热门标签</h2>
-            <span class="section-hint">竞赛与技能推荐</span>
-          </div>
-          <div class="tag-cloud">
-            <button
-              v-for="tag in HOT_TAGS"
-              :key="tag"
-              class="tag-button"
-              type="button"
-              @click="handleKeywordSearch(tag)"
-            >
-              <van-tag plain type="primary">{{ tag }}</van-tag>
-            </button>
-          </div>
-        </section>
-      </div>
-    </div>
-    <p class="search-help">输入完整标签可直接搜索，也可在下方多选技能寻找队友</p>
-    <TagSelector ref="tagSelectorRef" v-model="activeIds" />
-    <div class="search-action">
-      <van-button block type="primary" @click="handleSelectedSearch">按已选标签搜索</van-button>
-    </div>
-  </div>
-</template>
 
 <style scoped>
 .search-discovery {

@@ -22,9 +22,10 @@ myAxios.interceptors.request.use(
 const getInternalRedirectPath = () => {
   const { pathname, search, hash } = window.location
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
-  const path = basePath && basePath !== '/' && pathname.startsWith(basePath)
-    ? pathname.slice(basePath.length) || '/'
-    : pathname
+  const path =
+    basePath && basePath !== '/' && pathname.startsWith(basePath)
+      ? pathname.slice(basePath.length) || '/'
+      : pathname
 
   return `${path.startsWith('/') ? path : `/${path}`}${search}${hash}`
 }

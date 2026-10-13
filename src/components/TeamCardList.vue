@@ -1,3 +1,85 @@
+<template>
+  <div id="teamCardList">
+    <van-card
+      v-for="team in props.teamList"
+      :thumb="teamIllustration"
+      :desc="team.description"
+      :title="`${team.name}`"
+      :key="team.id"
+    >
+      <template #tags>
+        <van-tag plain type="danger" style="margin-right: 8px; margin-top: 8px">
+          {{ teamStatusEnum[team.status] }}
+        </van-tag>
+      </template>
+      <template #bottom>
+        <div>
+          <span>队长：{{ team.createUser?.username ?? '未知' }}</span>
+          <span style="margin-left: 1em">{{ `队伍人数: ${team.hasJoinNum}/${team.maxNum}` }}</span>
+        </div>
+        <div v-if="team.expireTime">
+          {{ '过期时间: ' + formatDateTime(team.expireTime) }}
+        </div>
+        <div>
+          {{ '创建时间: ' + formatDateTime(team.createTime) }}
+        </div>
+      </template>
+      <template #footer>
+        <van-button
+          size="small"
+          type="primary"
+          v-if="team.userId !== userStore.currentUser?.id && !team.hasJoin"
+          plain
+          :loading="pendingTeamId === team.id"
+          :disabled="pendingTeamId !== null"
+          @click="preJoinTeam(team)"
+        >
+          加入队伍
+        </van-button>
+        <van-button
+          v-if="team.userId === userStore.currentUser?.id"
+          size="small"
+          plain
+          :disabled="pendingTeamId !== null"
+          @click="doUpdateTeam(team.id)"
+          >更新队伍
+        </van-button>
+        <!-- 仅加入队伍可见 -->
+        <van-button
+          v-if="team.userId !== userStore.currentUser?.id && team.hasJoin"
+          size="small"
+          plain
+          type="danger"
+          :loading="pendingTeamId === team.id"
+          :disabled="pendingTeamId !== null"
+          @click="doQuitTeam(team.id)"
+          >退出队伍
+        </van-button>
+        <van-button
+          v-if="team.userId === userStore.currentUser?.id"
+          size="small"
+          type="danger"
+          plain
+          :loading="pendingTeamId === team.id"
+          :disabled="pendingTeamId !== null"
+          @click="doDeleteTeam(team.id)"
+          >解散队伍
+        </van-button>
+      </template>
+    </van-card>
+    <van-dialog
+      v-model:show="showPasswordDialog"
+      title="请输入密码"
+      show-cancel-button
+      :before-close="onPasswordDialogClose"
+      :confirm-button-disabled="pendingTeamId !== null"
+      :cancel-button-disabled="pendingTeamId !== null"
+    >
+      <van-field v-model="password" placeholder="请输入密码" :disabled="pendingTeamId !== null" />
+    </van-dialog>
+  </div>
+</template>
+
 <script setup lang="ts">
 import type { TeamType } from '@/models/team.d.ts'
 import { teamStatusEnum } from '@/constants/teamStatus'
@@ -128,88 +210,6 @@ onUnmounted(() => {
   active = false
 })
 </script>
-
-<template>
-  <div id="teamCardList">
-    <van-card
-      v-for="team in props.teamList"
-      :thumb="teamIllustration"
-      :desc="team.description"
-      :title="`${team.name}`"
-      :key="team.id"
-    >
-      <template #tags>
-        <van-tag plain type="danger" style="margin-right: 8px; margin-top: 8px">
-          {{ teamStatusEnum[team.status] }}
-        </van-tag>
-      </template>
-      <template #bottom>
-        <div>
-          <span>队长：{{ team.createUser?.username ?? '未知' }}</span>
-          <span style="margin-left: 1em">{{ `队伍人数: ${team.hasJoinNum}/${team.maxNum}` }}</span>
-        </div>
-        <div v-if="team.expireTime">
-          {{ '过期时间: ' + formatDateTime(team.expireTime) }}
-        </div>
-        <div>
-          {{ '创建时间: ' + formatDateTime(team.createTime) }}
-        </div>
-      </template>
-      <template #footer>
-        <van-button
-          size="small"
-          type="primary"
-          v-if="team.userId !== userStore.currentUser?.id && !team.hasJoin"
-          plain
-          :loading="pendingTeamId === team.id"
-          :disabled="pendingTeamId !== null"
-          @click="preJoinTeam(team)"
-        >
-          加入队伍
-        </van-button>
-        <van-button
-          v-if="team.userId === userStore.currentUser?.id"
-          size="small"
-          plain
-          :disabled="pendingTeamId !== null"
-          @click="doUpdateTeam(team.id)"
-          >更新队伍
-        </van-button>
-        <!-- 仅加入队伍可见 -->
-        <van-button
-          v-if="team.userId !== userStore.currentUser?.id && team.hasJoin"
-          size="small"
-          plain
-          type="danger"
-          :loading="pendingTeamId === team.id"
-          :disabled="pendingTeamId !== null"
-          @click="doQuitTeam(team.id)"
-          >退出队伍
-        </van-button>
-        <van-button
-          v-if="team.userId === userStore.currentUser?.id"
-          size="small"
-          type="danger"
-          plain
-          :loading="pendingTeamId === team.id"
-          :disabled="pendingTeamId !== null"
-          @click="doDeleteTeam(team.id)"
-          >解散队伍
-        </van-button>
-      </template>
-    </van-card>
-    <van-dialog
-      v-model:show="showPasswordDialog"
-      title="请输入密码"
-      show-cancel-button
-      :before-close="onPasswordDialogClose"
-      :confirm-button-disabled="pendingTeamId !== null"
-      :cancel-button-disabled="pendingTeamId !== null"
-    >
-      <van-field v-model="password" placeholder="请输入密码" :disabled="pendingTeamId !== null" />
-    </van-dialog>
-  </div>
-</template>
 
 <style scoped>
 #teamCardList {

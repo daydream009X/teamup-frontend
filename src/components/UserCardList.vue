@@ -8,11 +8,7 @@
       v-for="user in props.userList"
       :key="user.id"
     >
-      <van-card
-        :desc="user.profile"
-        :title="`${user.username}（${user.planetCode}）`"
-        :thumb="user.avatarUrl"
-      >
+      <van-card :desc="user.profile" :title="user.username" :thumb="user.avatarUrl">
         <template #tags>
           <van-tag
             plain

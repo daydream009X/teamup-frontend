@@ -1,3 +1,23 @@
+<template>
+  <div id="homeView" :aria-busy="loading">
+    <van-cell center title="标签相似匹配" label="按已有标签寻找相似队友">
+      <template #right-icon>
+        <van-switch v-model="isMatchMode" size="24" />
+      </template>
+    </van-cell>
+    <van-skeleton v-if="loading" title avatar :row="3" class="home-loading" />
+    <UserCardList v-else :user-list="visibleUsers" :loading="false" />
+    <van-empty
+      v-if="!loading && !visibleUsers.length"
+      :description="errorMessage || '暂未找到队友，试试按竞赛或技能标签搜索'"
+    >
+      <van-button v-if="errorMessage" type="primary" size="small" @click="retryCount++">
+        重试
+      </van-button>
+    </van-empty>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { showToast } from 'vant'
@@ -64,26 +84,6 @@ watch(
   { immediate: true },
 )
 </script>
-
-<template>
-  <div id="homeView" :aria-busy="loading">
-    <van-cell center title="标签相似匹配" label="按已有标签寻找相似队友">
-      <template #right-icon>
-        <van-switch v-model="isMatchMode" size="24" />
-      </template>
-    </van-cell>
-    <van-skeleton v-if="loading" title avatar :row="3" class="home-loading" />
-    <UserCardList v-else :user-list="visibleUsers" :loading="false" />
-    <van-empty
-      v-if="!loading && !visibleUsers.length"
-      :description="errorMessage || '暂未找到队友，试试按竞赛或技能标签搜索'"
-    >
-      <van-button v-if="errorMessage" type="primary" size="small" @click="retryCount++">
-        重试
-      </van-button>
-    </van-empty>
-  </div>
-</template>
 
 <style scoped>
 .home-loading {

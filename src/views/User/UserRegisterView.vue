@@ -46,14 +46,6 @@
             />
           </template>
         </van-field>
-        <van-field
-          v-model="planetCode"
-          name="planetCode"
-          label="成员编号"
-          placeholder="请输入成员编号（不超过5位）"
-          :formatter="noSpace"
-          :rules="[{ required: true, message: '请填写成员编号' }]"
-        />
       </van-cell-group>
       <div style="margin: 16px">
         <van-button round block type="primary" native-type="submit" :loading="submitting">
@@ -79,7 +71,6 @@ const router = useRouter()
 const userAccount = ref('')
 const userPassword = ref('')
 const checkPassword = ref('')
-const planetCode = ref('')
 const passwordVisible = ref(false)
 const checkPasswordVisible = ref(false)
 const submitting = ref(false)
@@ -100,7 +91,6 @@ const onSubmit = async () => {
       userAccount: userAccount.value,
       userPassword: userPassword.value,
       checkPassword: checkPassword.value,
-      planetCode: planetCode.value,
       username: defaultUsername,
     })
     const userId = Number(res?.data)

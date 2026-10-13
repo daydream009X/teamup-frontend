@@ -1,3 +1,47 @@
+<template>
+  <div class="tag-selector">
+    <van-divider
+      :style="{
+        color: 'var(--color-primary)',
+        borderColor: 'var(--color-primary)',
+        padding: '0 16px',
+      }"
+    >
+      已选标签
+    </van-divider>
+    <div v-if="allTags.length === 0" style="padding: 0 16px">请选择标签</div>
+    <div class="tag-grid">
+      <van-tag v-for="tag in lockedTagList" :key="tag" type="primary">{{ tag }}</van-tag>
+      <van-tag
+        v-for="tag in normalTagList"
+        :key="tag"
+        closeable
+        type="primary"
+        @close="doClose(tag)"
+      >
+        {{ tag }}
+      </van-tag>
+    </div>
+
+    <van-divider
+      :style="{
+        color: 'var(--color-primary)',
+        borderColor: 'var(--color-primary)',
+        padding: '0 16px',
+      }"
+    >
+      选择标签
+    </van-divider>
+    <van-tree-select
+      :active-id="selectedTags"
+      :main-active-index="activeIndex"
+      :items="displayTagList"
+      @update:active-id="onActiveIdChange"
+      @update:main-active-index="activeIndex = $event"
+    />
+  </div>
+</template>
+
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { showToast } from 'vant'
@@ -163,50 +207,6 @@ watch(
   },
 )
 </script>
-
-<template>
-  <div class="tag-selector">
-    <van-divider
-      :style="{
-        color: 'var(--color-primary)',
-        borderColor: 'var(--color-primary)',
-        padding: '0 16px',
-      }"
-    >
-      已选标签
-    </van-divider>
-    <div v-if="allTags.length === 0" style="padding: 0 16px">请选择标签</div>
-    <div class="tag-grid">
-      <van-tag v-for="tag in lockedTagList" :key="tag" type="primary">{{ tag }}</van-tag>
-      <van-tag
-        v-for="tag in normalTagList"
-        :key="tag"
-        closeable
-        type="primary"
-        @close="doClose(tag)"
-      >
-        {{ tag }}
-      </van-tag>
-    </div>
-
-    <van-divider
-      :style="{
-        color: 'var(--color-primary)',
-        borderColor: 'var(--color-primary)',
-        padding: '0 16px',
-      }"
-    >
-      选择标签
-    </van-divider>
-    <van-tree-select
-      :active-id="selectedTags"
-      :main-active-index="activeIndex"
-      :items="displayTagList"
-      @update:active-id="onActiveIdChange"
-      @update:main-active-index="activeIndex = $event"
-    />
-  </div>
-</template>
 
 <style scoped>
 .tag-grid {

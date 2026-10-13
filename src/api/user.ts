@@ -15,7 +15,6 @@ export const register = (data: {
   userAccount: string
   userPassword: string
   checkPassword: string
-  planetCode: string
   username: string
 }) => myAxios.post('/user/register', data)
 

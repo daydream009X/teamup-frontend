@@ -42,7 +42,6 @@
         :value="userStore.currentUser.email"
         @click="toEdit('email', '邮箱', userStore.currentUser.email)"
       />
-      <van-cell title="成员编号" :value="userStore.currentUser.planetCode" />
       <van-cell
         title="标签"
         is-link

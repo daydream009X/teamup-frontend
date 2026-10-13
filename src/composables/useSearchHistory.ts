@@ -30,7 +30,6 @@ const readHistory = (): string[] | null => {
       ),
     ].slice(0, HISTORY_LIMIT)
   } catch {
-    // 损坏的历史不应阻断搜索，下次写入时可覆盖恢复。
     return []
   }
 }
@@ -50,7 +49,6 @@ export function useSearchHistory(): UseSearchHistoryReturn {
       else localStorage.removeItem(STORAGE_KEY)
       memoryOnly = false
     } catch {
-      // 存储被禁用或已满时，仍保留当前页面内的记录。
       memoryOnly = true
     }
   }

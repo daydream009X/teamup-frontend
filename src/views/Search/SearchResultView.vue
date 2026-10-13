@@ -1,3 +1,11 @@
+<template>
+  <div id="searchResultView" :aria-busy="loading">
+    <van-skeleton v-if="loading" title avatar :row="3" class="search-loading" />
+    <UserCardList v-else :user-list="userList" :loading="false" />
+    <van-empty v-if="!loading && !userList.length" :description="emptyMessage" />
+  </div>
+</template>
+
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -76,14 +84,6 @@ watch(
   { immediate: true },
 )
 </script>
-
-<template>
-  <div id="searchResultView" :aria-busy="loading">
-    <van-skeleton v-if="loading" title avatar :row="3" class="search-loading" />
-    <UserCardList v-else :user-list="userList" :loading="false" />
-    <van-empty v-if="!loading && !userList.length" :description="emptyMessage" />
-  </div>
-</template>
 
 <style scoped>
 .search-loading {
