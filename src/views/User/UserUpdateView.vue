@@ -43,6 +43,18 @@
         @click="toEdit('email', '邮箱', userStore.currentUser.email)"
       />
       <van-cell
+        title="QQ"
+        is-link
+        :value="userStore.currentUser.qq || '未设置'"
+        @click="toEdit('qq', 'QQ', userStore.currentUser.qq ?? '')"
+      />
+      <van-cell
+        title="微信"
+        is-link
+        :value="userStore.currentUser.wechat || '未设置'"
+        @click="toEdit('wechat', '微信', userStore.currentUser.wechat ?? '')"
+      />
+      <van-cell
         title="标签"
         is-link
         to="/user/edit"

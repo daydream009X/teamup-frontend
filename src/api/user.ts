@@ -1,6 +1,6 @@
 import myAxios from '@/plugins/myAxios'
 import qs from 'qs'
-import type { UserType } from '@/models/user.d.ts'
+import type { UserContactType, UserType } from '@/models/user.d.ts'
 
 /**
  * 用户登录
@@ -44,6 +44,12 @@ export const getCurrentUser = async () => {
  * 更新用户信息
  */
 export const updateUser = (data: Record<string, unknown>) => myAxios.post('/user/update', data)
+
+/**
+ * 实时获取用户公开联系方式
+ */
+export const getUserContact = (id: number) =>
+  myAxios.get<UserContactType>('/user/contact', { params: { id } })
 
 /**
  * 极速匹配（根据标签匹配用户）

@@ -8,8 +8,18 @@ export type UserType = {
   gender: number
   phone: string
   email: string
+  qq?: string | null
+  wechat?: string | null
   userStatus: number
   userRole: number
   tags: string[]
   createTime: Date
+}
+
+export type UserContactType = {
+  id: number
+  phone?: string | null
+  email?: string | null
+  qq?: string | null
+  wechat?: string | null
 }

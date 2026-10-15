@@ -168,6 +168,20 @@ const onSubmit = async () => {
 
   console.log(currentUser, '当前用户')
 
+  const editKey = editUser.value.editKey
+  if (editKey === 'qq' || editKey === 'wechat') {
+    const value = editUser.value.currentValue.trim()
+    if (value && editKey === 'qq' && !/^\d{1,20}$/.test(value)) {
+      showToast('QQ 请输入 1–20 位数字，留空可清除')
+      return
+    }
+    if (value && editKey === 'wechat' && !/^[a-zA-Z0-9_-]{1,64}$/.test(value)) {
+      showToast('微信请输入 1–64 位字母、数字、下划线或短横线，留空可清除')
+      return
+    }
+    editUser.value.currentValue = value
+  }
+
   const updateData: Record<string, unknown> = {
     id: currentUser.id,
     [editUser.value.editKey as string]:
@@ -211,7 +225,7 @@ const onSubmit = async () => {
       )
       router.back()
     } else {
-      showToast('修改错误')
+      showToast(res.description || res.message || '修改失败，请稍后重试')
     }
   } catch {
     showToast('修改失败，请检查网络后重试')

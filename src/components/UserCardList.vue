@@ -29,20 +29,33 @@
     </van-skeleton>
     <van-dialog
       v-model:show="showDialog"
-      :title="contactUser?.username ? `${contactUser.username} 的联系方式` : '联系方式'"
+      :title="contactTarget?.username ? `${contactTarget.username} 的联系方式` : '联系方式'"
       show-cancel-button
     >
       <div class="contact-content">
-        <van-cell title="电话" :value="contactUser?.phone || '未设置'" />
-        <van-cell title="邮箱" :value="contactUser?.email || '未设置'" />
+        <div v-if="contactLoading" class="contact-status" role="status">
+          <VanLoading size="24px" vertical>正在加载联系方式</VanLoading>
+        </div>
+        <div v-else-if="contactError" class="contact-status" role="alert">
+          <p>{{ contactError }}</p>
+          <van-button size="small" type="primary" plain @click="loadContact">重试</van-button>
+        </div>
+        <template v-else-if="contactUser">
+          <van-cell title="电话" :value="contactUser.phone || '未设置'" />
+          <van-cell title="邮箱" :value="contactUser.email || '未设置'" />
+          <van-cell title="QQ" :value="contactUser.qq || '未设置'" />
+          <van-cell title="微信" :value="contactUser.wechat || '未设置'" />
+        </template>
       </div>
     </van-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { UserType } from '@/models/user.d.ts'
-import { ref } from 'vue'
+import { onBeforeUnmount, ref, watch } from 'vue'
+import { Loading as VanLoading } from 'vant'
+import { getUserContact } from '@/api/user'
+import type { UserContactType, UserType } from '@/models/user.d.ts'
 
 interface UserCardListProps {
   loading: boolean
@@ -54,13 +67,64 @@ const props = withDefaults(defineProps<UserCardListProps>(), {
   userList: () => [],
 })
 
-const showDialog = ref(false)
-const contactUser = ref<UserType>()
+const showDialog = ref<boolean>(false)
+const contactTarget = ref<Pick<UserType, 'id' | 'username'> | null>(null)
+const contactUser = ref<UserContactType | null>(null)
+const contactLoading = ref<boolean>(false)
+const contactError = ref<string>('')
+let contactRequestVersion = 0
+
+const loadContact = async () => {
+  const userId = contactTarget.value?.id
+  if (userId === undefined || !showDialog.value) return
+
+  const requestVersion = ++contactRequestVersion
+  contactUser.value = null
+  contactError.value = ''
+  contactLoading.value = true
+
+  try {
+    const res = await getUserContact(userId)
+    if (requestVersion !== contactRequestVersion) return
+
+    if (res.code === 0 && res.data?.id === userId) {
+      contactUser.value = res.data
+    } else {
+      contactError.value =
+        res.code === 0
+          ? '联系方式数据异常，请重试'
+          : res.description || res.message || '联系方式加载失败，请重试'
+    }
+  } catch {
+    if (requestVersion !== contactRequestVersion) return
+    contactError.value = '联系方式加载失败，请检查网络后重试'
+  } finally {
+    if (requestVersion === contactRequestVersion) contactLoading.value = false
+  }
+}
 
 const showContact = (user: UserType) => {
-  contactUser.value = user
+  contactTarget.value = { id: user.id, username: user.username }
   showDialog.value = true
+  void loadContact()
 }
+
+watch(
+  showDialog,
+  (visible) => {
+    if (visible) return
+    contactRequestVersion++
+    contactTarget.value = null
+    contactUser.value = null
+    contactLoading.value = false
+    contactError.value = ''
+  },
+  { flush: 'sync' },
+)
+
+onBeforeUnmount(() => {
+  contactRequestVersion++
+})
 </script>
 
 <style scoped>
@@ -93,5 +157,11 @@ const showContact = (user: UserType) => {
 }
 .contact-content {
   padding: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.contact-status {
+  padding: 16px 0;
+  text-align: center;
 }
 </style>
